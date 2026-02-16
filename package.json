@@ -1,0 +1,29 @@
+{
+  "name": "firing",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "config/*"
+  ],
+  "scripts": {
+    "dev:web": "cd apps/web && npm run dev",
+    "dev:mobile": "cd apps/mobile && npx expo start",
+    "build:web": "cd apps/web && npm run build",
+    "build:mobile": "cd apps/mobile && npx expo export --platform web",
+    "start:web": "cd apps/web && npm run start",
+    "lint": "eslint apps/ packages/"
+  },
+  "devDependencies": {
+    "@types/node": "20.11.19",
+    "@types/react": "19.2.0",
+    "@types/react-dom": "19.2.0",
+    "autoprefixer": "10.4.17",
+    "eslint": "9.0.0",
+    "eslint-config-next": "16.1.6",
+    "postcss": "8.4.35",
+    "tailwindcss": "3.4.1",
+    "typescript": "5.3.3"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@firing/data-access",
+  "version": "1.0.0",
+  "description": "Shared data access layer for firing project",
+  "main": "index.ts",
+  "types": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@firing/types": "1.0.0",
+    "@firing/utils": "1.0.0"
+  }
+}
