@@ -1,8 +1,0 @@
-#!/bin/bash
-
-# Set PATH to use Homebrew installed node
-PATH="/usr/local/opt/node/bin:$PATH"
-export PATH
-
-# Run the command with the new PATH
-exec "$@"

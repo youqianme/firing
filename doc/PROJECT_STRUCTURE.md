@@ -12,17 +12,45 @@ firing/
   ├── apps/                 (应用源码)
   │   ├── web/              (Web 端项目)
   │   └── mobile/           (移动端项目)
-  ├── docs/                 (项目文档)
-  ├── README.md
-  ├── PRD.md
-  └── UI_Description.md
+  ├── packages/             (共享代码)
+  │   ├── types/            (共享类型定义)
+  │   ├── utils/            (共享工具函数)
+  │   ├── data-access/      (共享数据访问层)
+  │   └── ui/               (共享 UI 组件)
+  ├── config/               (配置文件)
+  │   ├── .env.example      (环境变量示例)
+  │   └── .env.production   (生产环境配置)
+  ├── deploy/               (部署脚本)
+  ├── doc/                  (项目文档)
+  ├── docker-compose.yml    (Docker 配置)
+  └── Dockerfile            (Docker 构建文件)
 ```
 
 ### 根目录配置文件
-- **`package.json`**: 定义了 Workspaces (`apps/*`) 和全局启动脚本。
+- **`package.json`**: 定义了 Workspaces (`apps/*`, `packages/*`, `config/*`) 和全局启动脚本。
   - `npm run dev:web`: 启动 Web 端开发环境。
   - `npm run dev:mobile`: 启动移动端 Metro 服务。
-  - `npm run db:studio`: 启动 Prisma Studio。
+  - `npm run build:web`: 构建 Web 端生产版本。
+  - `npm run build:mobile`: 构建移动端生产版本。
+  - `npm run start:web`: 启动 Web 端生产服务器。
+
+### 共享代码目录 (`packages/`)
+- **`types/`**: 共享类型定义，包含资产、负债、交易等所有数据模型的类型。
+- **`utils/`**: 共享工具函数，包含货币转换、日期格式化、FIRE计算等功能。
+- **`data-access/`**: 共享数据访问层，包含数据库适配器和仓库模式。
+- **`ui/`**: 共享 UI 组件，包含在 Web 端和移动端之间共享的通用组件。
+
+### 配置文件目录 (`config/`)
+- **`.env.example`**: 环境变量示例文件，包含所有需要的环境变量及其默认值。
+- **`.env.production`**: 生产环境变量配置文件，包含生产环境的具体配置。
+
+### 部署脚本目录 (`deploy/`)
+- **`build.sh`**: 构建所有服务的 Docker 镜像。
+- **`start.sh`**: 启动所有服务的容器。
+- **`stop.sh`**: 停止所有服务的容器。
+- **`restart.sh`**: 先停止所有服务，然后重新启动它们。
+- **`logs.sh`**: 查看容器日志，支持选择查看开发环境、生产环境或所有服务的日志。
+- **`README.md`**: 部署文档，包含部署流程和注意事项。
 
 补充说明：
 - 本仓库可能会出现本地工具/缓存目录（例如 `.trae/`、`mobile/temp_home/`、`**/.next/`、`node_modules/`），它们不属于项目核心结构，已通过 `.gitignore` 进行忽略。
@@ -52,28 +80,22 @@ Web 端的核心页面和 API 路由目录。
 - **`earnings/`**: 收益日历页面。
 - **`fire/`**: FIRE 目标管理页面。
 - **`liabilities/`**: 负债管理页面。
+- **`market-data/`**: 市场数据管理页面。
 - **`settings/`**: 设置页面。
 - **`transactions/`**: 交易/转账页面（转账、定期兑付等）。
 - **`layout.tsx`**: 全局布局文件。
 - **`page.tsx`**: 首页（仪表盘）。
 
-### `apps/web/components/`
-Web 端专用的 UI 组件。
-- **`ui/`**: 基础组件（Button, Card, Input 等）。
-- **`Sidebar.tsx`**: 侧边导航栏。
-
 ### `apps/web/lib/`
-- **`prisma.ts`**: Prisma 客户端实例。
-- **`financial-utils.ts`**: 核心金融计算逻辑（资产/负债估值、定期利息计算等；复用于 Web/Mobile）。
-- **`currency-utils.ts`**: 汇率换算（折算为本位币）工具函数。
-- **`utils.ts`**: 通用工具函数。
+- **`database.ts`**: Web 端数据库配置与初始化逻辑。
+- **`database-adapter.ts`**: Web 端数据库适配器，使用 better-sqlite3。
+- **`dataAccess.ts`**: Web 端数据访问层，使用共享的仓库模式。
 
-### `apps/web/prisma/`
-- **`schema.prisma`**: 数据库模型定义。
-- **`dev.db`**: SQLite 数据库文件 (开发环境)。
+### `apps/web/styles/`
+- **`globals.css`**: 全局样式文件。
 
-补充说明：
-- Web 端开发默认使用 `apps/web/prisma/dev.db`，由 `apps/web/.env` 中的 `DATABASE_URL` 控制。
+### `apps/web` 配置文件
+- **`package.json`**: Web 端依赖定义。
 
 ---
 
@@ -88,22 +110,24 @@ Web 端专用的 UI 组件。
   - `assets.tsx`: 资产列表与编辑。
   - `liabilities.tsx`: 负债列表。
   - `settings.tsx`: 设置页（含 FIRE 配置）。
+  - `transactions.tsx`: 交易记录页面。
 - **`_layout.tsx`**: 根布局。
 
 ### `apps/mobile/lib/`
 - **`db.ts`**: 移动端 SQLite 数据库配置与初始化逻辑。
-- **`storage.ts`**: 移动端本地存储封装（偏好/配置等）。
+- **`database-adapter.ts`**: 移动端数据库适配器，使用 expo-sqlite。
+- **`dataAccess.ts`**: 移动端数据访问层，使用共享的仓库模式。
 
-### `apps/mobile/components/`
-移动端专用组件。
-- **`Card.tsx`**: 卡片组件。
+### `apps/mobile/assets/`
+- **`adaptive-icon.png`**: 自适应图标。
+- **`favicon.png`**: 网站图标。
+- **`icon.png`**: 应用图标。
+- **`splash-icon.png`**: 启动屏幕图标。
 
 ### `apps/mobile` 配置文件
 - **`package.json`**: 移动端依赖定义。
 - **`app.json`**: Expo 应用配置。
-
-### `apps/mobile/ios/`
-iOS 原生工程（Expo Prebuild / 原生能力集成），包含 `Podfile`、Xcode 工程与 Workspace 等文件。
+- **`tsconfig.json`**: TypeScript 配置文件。
 
 ---
 
@@ -124,11 +148,24 @@ npm run dev:mobile
 # 按 'i' 启动 iOS 模拟器，或按 'a' 启动 Android 模拟器
 ```
 
-### 数据库管理
+### 构建生产版本
 ```bash
-# 推送 Schema 变更 (Web)
-npm run db:push
+# 构建 Web 端
+npm run build:web
 
-# 查看数据 (Web)
-npm run db:studio
+# 构建移动端
+npm run build:mobile
+```
+
+### Docker 部署
+```bash
+# 构建镜像
+./deploy/build.sh
+
+# 启动容器
+./deploy/start.sh
+
+# 访问应用
+# 开发环境: http://localhost:3000
+# 生产环境: http://localhost:3001
 ```

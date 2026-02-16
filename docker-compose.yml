@@ -15,7 +15,7 @@ services:
       - .:/app
       - /app/node_modules
       - ./data:/app/data
-    command: npm run dev
+    command: npm run dev:web
     restart: unless-stopped
 
   # 生产环境服务
@@ -30,7 +30,7 @@ services:
       - NEXT_PUBLIC_APP_ENV=production
     volumes:
       - ./data:/app/data
-    command: npm start
+    command: npm run start:web
     restart: unless-stopped
 
 volumes:

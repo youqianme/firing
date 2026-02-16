@@ -2,21 +2,18 @@
   "name": "firing",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "config/*"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "@types/better-sqlite3": "^7.6.13",
-    "better-sqlite3": "^12.6.2",
-    "date-fns": "^4.1.0",
-    "next": "16.1.6",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
-    "recharts": "^3.7.0",
-    "sqlite3": "^5.1.7"
+    "dev:web": "cd apps/web && npm run dev",
+    "dev:mobile": "cd apps/mobile && npx expo start",
+    "build:web": "cd apps/web && npm run build",
+    "build:mobile": "cd apps/mobile && npx expo export --platform web",
+    "start:web": "cd apps/web && npm run start",
+    "lint": "eslint apps/ packages/"
   },
   "devDependencies": {
     "@types/node": "20.11.19",
