@@ -76,8 +76,8 @@ deploy/
 ### Dockerfile
 
 项目使用多阶段构建，分为构建阶段和运行阶段：
-- 构建阶段：使用 node:18-alpine 镜像，安装所有依赖并构建应用
-- 运行阶段：使用 node:18-alpine 镜像，只安装生产依赖并复制构建产物
+- 构建阶段：使用 node:22-alpine 镜像，安装所有依赖并构建应用
+- 运行阶段：使用 node:22-alpine 镜像，只安装生产依赖并复制构建产物
 
 ### docker-compose.yml
 
