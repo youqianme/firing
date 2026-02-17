@@ -1,15 +1,15 @@
-import { initDatabase } from '../../../lib/database';
+import { initializeDatabase } from '../../../lib/database';
 import {
   assetRepository,
   activityRepository
 } from '../../../lib/dataAccess';
 
 // 初始化数据库
-initDatabase();
+initializeDatabase();
 
 export async function GET() {
   try {
-    const assets = assetRepository.getAll();
+    const assets = await assetRepository.getAll();
     return new Response(JSON.stringify(assets), {
       status: 200,
       headers: {
@@ -29,10 +29,10 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const assetData = await request.json();
-    const newAsset = assetRepository.create(assetData);
+    const newAsset = await assetRepository.create(assetData);
     
     // 记录活动
-    activityRepository.create({
+    await activityRepository.create({
       action: 'CREATE',
       objectType: 'ASSET',
       objectId: newAsset.id,
@@ -72,13 +72,13 @@ export async function PUT(request: Request) {
     }
     
     const assetData = await request.json();
-    const existingAsset = assetRepository.getById(id);
+    const existingAsset = await assetRepository.getById(id);
     
     if (existingAsset) {
-      const updatedAsset = assetRepository.update(id, assetData);
+      const updatedAsset = await assetRepository.update(id, assetData);
       if (updatedAsset) {
         // 记录活动
-        activityRepository.create({
+        await activityRepository.create({
           action: 'UPDATE',
           objectType: 'ASSET',
           objectId: updatedAsset.id,
@@ -128,12 +128,12 @@ export async function DELETE(request: Request) {
       });
     }
     
-    const existingAsset = assetRepository.getById(id);
+    const existingAsset = await assetRepository.getById(id);
     if (existingAsset) {
-      const success = assetRepository.delete(id);
+      const success = await assetRepository.delete(id);
       if (success) {
         // 记录活动
-        activityRepository.create({
+        await activityRepository.create({
           action: 'DELETE',
           objectType: 'ASSET',
           objectId: existingAsset.id,

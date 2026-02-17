@@ -6,6 +6,7 @@ import { DatabaseAdapter } from '@firing/data-access';
  */
 export class WebDatabaseAdapter implements DatabaseAdapter {
   private db: Database.Database;
+  private inTransaction: boolean = false;
 
   constructor(dbPath: string) {
     this.db = new Database(dbPath);
@@ -19,7 +20,7 @@ export class WebDatabaseAdapter implements DatabaseAdapter {
    */
   async execute(sql: string, params?: any[]): Promise<any[]> {
     const statement = this.db.prepare(sql);
-    return statement.all(params);
+    return params ? statement.all(...params) : statement.all();
   }
 
   /**
@@ -29,7 +30,7 @@ export class WebDatabaseAdapter implements DatabaseAdapter {
    */
   async run(sql: string, params?: any[]): Promise<void> {
     const statement = this.db.prepare(sql);
-    statement.run(params);
+    params ? statement.run(...params) : statement.run();
   }
 
   /**
@@ -40,7 +41,7 @@ export class WebDatabaseAdapter implements DatabaseAdapter {
    */
   async get(sql: string, params?: any[]): Promise<any | null> {
     const statement = this.db.prepare(sql);
-    const result = statement.get(params);
+    const result = params ? statement.get(...params) : statement.get();
     return result || null;
   }
 
@@ -48,21 +49,30 @@ export class WebDatabaseAdapter implements DatabaseAdapter {
    * 开始事务
    */
   async beginTransaction(): Promise<void> {
-    this.db.exec('BEGIN TRANSACTION');
+    if (!this.inTransaction) {
+      this.db.exec('BEGIN TRANSACTION');
+      this.inTransaction = true;
+    }
   }
 
   /**
    * 提交事务
    */
   async commit(): Promise<void> {
-    this.db.exec('COMMIT');
+    if (this.inTransaction) {
+      this.db.exec('COMMIT');
+      this.inTransaction = false;
+    }
   }
 
   /**
    * 回滚事务
    */
   async rollback(): Promise<void> {
-    this.db.exec('ROLLBACK');
+    if (this.inTransaction) {
+      this.db.exec('ROLLBACK');
+      this.inTransaction = false;
+    }
   }
 
   /**

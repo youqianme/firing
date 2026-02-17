@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { formatCurrency } from '../../utils/currency';
+import { formatCurrency } from '@firing/utils';
 
 // 直接在文件中定义所需的类型
 export type Currency = 'CNY' | 'USD' | 'EUR' | 'JPY' | 'KRW';

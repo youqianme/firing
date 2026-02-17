@@ -1,8 +1,8 @@
-import { initDatabase } from '../../../lib/database';
+import { initializeDatabase } from '../../../lib/database';
 import { assetRepository, activityRepository, marketDataRepository } from '../../../lib/dataAccess';
 
 // 初始化数据库
-initDatabase();
+initializeDatabase();
 
 export async function GET(request: Request) {
   try {
@@ -14,14 +14,14 @@ export async function GET(request: Request) {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     
     // 获取所有资产
-    const assets = assetRepository.getAll();
+    const assets = await assetRepository.getAll();
     
     // 获取当月的活动记录
     const startDate = new Date(year, month, 1).toISOString();
     const endDate = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
     
     // 这里简化处理，实际应该根据日期范围查询
-    const activities = activityRepository.getAll(1000);
+    const activities = await activityRepository.getAll(1000);
     const monthlyActivities = activities.filter(activity => {
       const activityDate = new Date(activity.createdAt);
       return activityDate.getFullYear() === year && activityDate.getMonth() === month;

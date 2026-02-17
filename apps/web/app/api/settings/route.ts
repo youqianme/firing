@@ -1,13 +1,13 @@
-import { initDatabase } from '../../../lib/database';
+import { initializeDatabase } from '../../../lib/database';
 import { userSettingsRepository, assetRepository, liabilityRepository, transactionRepository, activityRepository, fireConfigRepository } from '../../../lib/dataAccess';
 
 // 初始化数据库
-initDatabase();
+initializeDatabase();
 
 export async function GET() {
   try {
     // 获取用户设置
-    const settings = userSettingsRepository.get();
+    const settings = await userSettingsRepository.get();
     
     return new Response(JSON.stringify(settings), {
       status: 200,
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     const data = await request.json();
     
     // 保存用户设置
-    const updatedSettings = userSettingsRepository.update(data);
+    const updatedSettings = await userSettingsRepository.update(data);
     
     return new Response(JSON.stringify(updatedSettings), {
       status: 200,
@@ -53,17 +53,18 @@ export async function POST(request: Request) {
 export async function DELETE() {
   try {
     // 清空所有数据（危险操作）
-    const db = require('../../../lib/database').getDb();
+    const { dbManager } = require('../../../lib/database');
+    const adapter = dbManager.getAdapter();
     
     // 按照依赖关系删除数据
-    db.exec('DELETE FROM payments');
-    db.exec('DELETE FROM transactions');
-    db.exec('DELETE FROM activities');
-    db.exec('DELETE FROM assets');
-    db.exec('DELETE FROM liabilities');
-    db.exec('DELETE FROM accounts');
-    db.exec('DELETE FROM marketData');
-    db.exec('DELETE FROM fireConfig');
+    await adapter.run('DELETE FROM payments');
+    await adapter.run('DELETE FROM transactions');
+    await adapter.run('DELETE FROM activities');
+    await adapter.run('DELETE FROM assets');
+    await adapter.run('DELETE FROM liabilities');
+    await adapter.run('DELETE FROM accounts');
+    await adapter.run('DELETE FROM marketData');
+    await adapter.run('DELETE FROM fireConfig');
     
     // 保留用户设置
     

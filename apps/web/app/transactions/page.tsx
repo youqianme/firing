@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { formatCurrency } from '../../utils/currency';
-import { formatDate } from '../../utils/helpers';
+import { formatCurrency } from '@firing/utils';
+import { formatDate } from '@firing/utils';
 
 // 直接在文件中定义所需的类型
 export type Currency = 'CNY' | 'USD' | 'EUR' | 'JPY' | 'KRW';
-export type AssetType = 'cash' | 'bank' | 'investment' | 'real_estate' | 'other';
+export type AssetType = 'cash' | 'bank' | 'time_deposit' | 'investment' | 'commodity' | 'real_estate' | 'other';
 export type TransactionType = 'transfer' | 'redeem';
 export interface Asset {
   id: string;
@@ -35,9 +35,11 @@ export interface Transaction {
 export const AssetType = {
   CASH: 'cash' as AssetType,
   TIME_DEPOSIT: 'bank' as AssetType,
+  TIME_DEPOSIT_ALT: 'time_deposit' as AssetType,
   STOCK: 'investment' as AssetType,
   FUND: 'investment' as AssetType,
   GOLD: 'investment' as AssetType,
+  COMMODITY: 'commodity' as AssetType,
   REAL_ESTATE: 'real_estate' as AssetType,
   VEHICLE: 'other' as AssetType,
   LUXURY: 'other' as AssetType,
@@ -289,7 +291,7 @@ export default function TransactionsPage() {
 
   // 获取定期存款资产列表
   function getTimeDepositAssets(): Asset[] {
-    return assets.filter(a => a.type === AssetType.TIME_DEPOSIT);
+    return assets.filter(a => a.type === AssetType.TIME_DEPOSIT || a.type === AssetType.TIME_DEPOSIT_ALT);
   }
 
   if (isLoading) {

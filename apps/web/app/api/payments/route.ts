@@ -1,4 +1,4 @@
-import { initDatabase } from '../../../lib/database';
+import { initializeDatabase } from '../../../lib/database';
 import {
   paymentRepository,
   liabilityRepository,
@@ -6,11 +6,11 @@ import {
 } from '../../../lib/dataAccess';
 
 // 初始化数据库
-initDatabase();
+initializeDatabase();
 
 export async function GET() {
   try {
-    const payments = paymentRepository.getAll();
+    const payments = await paymentRepository.getAll();
     return new Response(JSON.stringify(payments), {
       status: 200,
       headers: {
@@ -32,19 +32,19 @@ export async function POST(request: Request) {
     const paymentData = await request.json();
     
     // 创建还款记录
-    const payment = paymentRepository.create(paymentData);
+    const payment = await paymentRepository.create(paymentData);
     
     // 更新负债余额
-    const liability = liabilityRepository.getById(paymentData.liabilityId);
+    const liability = await liabilityRepository.getById(paymentData.liabilityId);
     if (liability) {
       const updatedBalance = liability.balance - paymentData.amount;
-      const updatedLiability = liabilityRepository.update(paymentData.liabilityId, {
+      const updatedLiability = await liabilityRepository.update(paymentData.liabilityId, {
         balance: updatedBalance
       });
       
       if (updatedLiability) {
         // 记录活动
-        activityRepository.create({
+        await activityRepository.create({
           action: 'REPAYMENT',
           objectType: 'LIABILITY',
           objectId: updatedLiability.id,

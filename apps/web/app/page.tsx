@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { Area, AreaChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { convertCurrency, formatCurrency } from '../utils/currency';
-import { formatDate } from '../utils/helpers';
-import { Asset, Liability, Activity, Currency } from '../types';
+import { convertCurrency, formatCurrency, Currency } from '@firing/utils';
+import { formatDate } from '@firing/utils';
+import { Asset, Liability, Activity } from '@firing/types';
 
 export default function Home() {
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -204,8 +204,8 @@ export default function Home() {
         {/* 净资产趋势图 */}
         <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm mb-8">
           <h2 className="text-lg font-semibold text-slate-900 mb-4">净资产趋势</h2>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-80 w-full">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <AreaChart data={generateTrendData()}>
                 <defs>
                   <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">

@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { convertCurrency, formatCurrency } from '../../utils/currency';
-import { formatDate } from '../../utils/helpers';
+import { convertCurrency, formatCurrency } from '@firing/utils';
+import { formatDate } from '@firing/utils';
 
 // 直接在文件中定义所需的类型
 export type Currency = 'CNY' | 'USD' | 'EUR' | 'JPY' | 'KRW';
@@ -598,8 +598,8 @@ export default function AssetsPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
                         {asset.type === 'cash' ? '现金' :
-                         asset.type === 'bank' ? '定期' :
-                         asset.type === 'investment' ? 
+                         asset.type === 'bank' || asset.type === 'time_deposit' ? '定期' :
+                         asset.type === 'investment' || asset.type === 'commodity' ? 
                            (asset.subType === 'stock' ? '股票' :
                             asset.subType === 'fund' ? '基金' :
                             asset.subType === 'gold' ? '黄金' : '投资') :
