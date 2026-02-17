@@ -67,6 +67,7 @@ temp/
 # Docker
 .dockerignore
 Dockerfile*
+!Dockerfile
 !Dockerfile.dev
 !Dockerfile.prod
 
