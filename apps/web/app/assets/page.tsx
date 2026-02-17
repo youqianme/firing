@@ -6,7 +6,7 @@ import { formatDate } from '@firing/utils';
 
 // 直接在文件中定义所需的类型
 export type Currency = 'CNY' | 'USD' | 'EUR' | 'JPY' | 'KRW';
-export type AssetType = 'cash' | 'bank' | 'investment' | 'real_estate' | 'other';
+export type AssetType = 'cash' | 'bank' | 'time_deposit' | 'investment' | 'commodity' | 'real_estate' | 'other';
 export type InvestmentSubType = 'stock' | 'fund' | 'gold' | 'other';
 export interface Asset {
   id: string;
@@ -49,6 +49,9 @@ export default function AssetsPage() {
 
   // 加载数据
   useEffect(() => {
+    // 组件挂载后立即设置isAdding状态为false
+    setIsAdding(false);
+
     async function loadData() {
       try {
         setIsLoading(true);
@@ -216,7 +219,12 @@ export default function AssetsPage() {
       endDate: asset.endDate || '',
       notes: asset.notes || ''
     });
+    // 直接设置isAdding为true
     setIsAdding(true);
+    // 强制组件重新渲染
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 100);
   }
 
   // 删除资产
@@ -306,7 +314,14 @@ export default function AssetsPage() {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-slate-900">资产管理</h1>
           <button
-            onClick={() => setIsAdding(true)}
+            onClick={() => {
+              // 直接设置isAdding为true
+              setIsAdding(true);
+              // 强制组件重新渲染
+              setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+              }, 100);
+            }}
             className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
           >
             新增资产
@@ -314,46 +329,48 @@ export default function AssetsPage() {
         </div>
 
         {/* 资产类型筛选 */}
-        <div className="mb-6 overflow-x-auto">
-          <div className="flex space-x-2 min-w-max">
-            <button 
-              onClick={() => setActiveFilter('all')}
-              className={`px-4 py-2 rounded-lg ${activeFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
-            >
-              全部资产
-            </button>
-            <button 
-              onClick={() => setActiveFilter('cash')}
-              className={`px-4 py-2 rounded-lg ${activeFilter === 'cash' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
-            >
-              现金
-            </button>
-            <button 
-              onClick={() => setActiveFilter('bank')}
-              className={`px-4 py-2 rounded-lg ${activeFilter === 'bank' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
-            >
-              定期
-            </button>
-            <button 
-              onClick={() => setActiveFilter('investment')}
-              className={`px-4 py-2 rounded-lg ${activeFilter === 'investment' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
-            >
-              投资
-            </button>
-            <button 
-              onClick={() => setActiveFilter('real_estate')}
-              className={`px-4 py-2 rounded-lg ${activeFilter === 'real_estate' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
-            >
-              房产
-            </button>
-            <button 
-              onClick={() => setActiveFilter('other')}
-              className={`px-4 py-2 rounded-lg ${activeFilter === 'other' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
-            >
-              其他
-            </button>
+        {!isAdding && (
+          <div className="mb-6 overflow-x-auto">
+            <div className="flex space-x-2 min-w-max">
+              <button 
+                onClick={() => setActiveFilter('all')}
+                className={`px-4 py-2 rounded-lg ${activeFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
+              >
+                全部资产
+              </button>
+              <button 
+                onClick={() => setActiveFilter('cash')}
+                className={`px-4 py-2 rounded-lg ${activeFilter === 'cash' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
+              >
+                现金
+              </button>
+              <button 
+                onClick={() => setActiveFilter('bank')}
+                className={`px-4 py-2 rounded-lg ${activeFilter === 'bank' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
+              >
+                定期
+              </button>
+              <button 
+                onClick={() => setActiveFilter('investment')}
+                className={`px-4 py-2 rounded-lg ${activeFilter === 'investment' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
+              >
+                投资
+              </button>
+              <button 
+                onClick={() => setActiveFilter('real_estate')}
+                className={`px-4 py-2 rounded-lg ${activeFilter === 'real_estate' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
+              >
+                房产
+              </button>
+              <button 
+                onClick={() => setActiveFilter('other')}
+                className={`px-4 py-2 rounded-lg ${activeFilter === 'other' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
+              >
+                其他
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* 新增/编辑资产表单 */}
         {isAdding && (
@@ -651,7 +668,14 @@ export default function AssetsPage() {
                 点击上方「新增资产」按钮开始管理您的资产
               </p>
               <button
-                onClick={() => setIsAdding(true)}
+                onClick={() => {
+                  // 直接设置isAdding为true
+                  setIsAdding(true);
+                  // 强制组件重新渲染
+                  setTimeout(() => {
+                    window.dispatchEvent(new Event('resize'));
+                  }, 100);
+                }}
                 className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
               >
                 新增资产

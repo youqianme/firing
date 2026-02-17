@@ -210,7 +210,7 @@ export default function EarningsPage() {
                   <span className="text-sm font-medium text-slate-900">{day}</span>
                   {dayEarnings && (
                     <span className="text-xs font-medium mt-1">
-                      {dayEarnings.total > 0 ? '+' : ''}{dayEarnings.total.toFixed(0)}
+                      {dayEarnings.total > 0 ? '+' : ''}{dayEarnings.total.toFixed(2)}
                     </span>
                   )}
                 </div>
