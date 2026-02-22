@@ -8,10 +8,12 @@ echo "=== 开始设置有钱么项目 ==="
 
 # 函数：检查命令是否存在
 check_command() {
-    if ! command -v "$1" &> /dev/null; then
-        return 1
-    else
+    if command -v "$1" > /dev/null 2>&1; then
         return 0
+    elif type "$1" > /dev/null 2>&1; then
+        return 0
+    else
+        return 1
     fi
 }
 
@@ -28,7 +30,7 @@ install_node() {
         *)          machine="UNKNOWN:${OS}"
     esac
 
-    if [ "$machine" == "Mac" ]; then
+    if [ "$machine" = "Mac" ]; then
         if check_command brew; then
             echo "检测到 Homebrew，正在使用 brew 安装 Node.js..."
             brew install node
@@ -36,11 +38,11 @@ install_node() {
             echo "错误：未检测到 Homebrew。请手动安装 Node.js (https://nodejs.org/) 或先安装 Homebrew (https://brew.sh/)."
             exit 1
         fi
-    elif [ "$machine" == "Linux" ]; then
+    elif [ "$machine" = "Linux" ]; then
         if check_command apt-get; then
             echo "检测到 apt-get，正在安装 Node.js..."
             # 尝试安装 nodejs 和 npm
-            if [ "$EUID" -ne 0 ]; then
+            if [ "$(id -u)" -ne 0 ]; then
                 echo "请输入密码以使用 sudo 安装 Node.js"
                 sudo apt-get update
                 sudo apt-get install -y nodejs npm
@@ -50,7 +52,7 @@ install_node() {
             fi
         elif check_command yum; then
             echo "检测到 yum，正在安装 Node.js..."
-            if [ "$EUID" -ne 0 ]; then
+            if [ "$(id -u)" -ne 0 ]; then
                 echo "请输入密码以使用 sudo 安装 Node.js"
                 sudo yum install -y nodejs npm
             else
