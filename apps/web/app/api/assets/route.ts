@@ -4,10 +4,9 @@ import {
   activityRepository
 } from '../../../lib/dataAccess';
 
-// 初始化数据库
-initializeDatabase();
-
 export async function GET() {
+  // 确保数据库已初始化
+  await initializeDatabase();
   try {
     const assets = await assetRepository.getAll();
     return new Response(JSON.stringify(assets), {
@@ -27,6 +26,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  // 确保数据库已初始化
+  await initializeDatabase();
   try {
     const assetData = await request.json();
     const newAsset = await assetRepository.create(assetData);

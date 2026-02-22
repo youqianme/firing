@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Area, AreaChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { convertCurrency, formatCurrency, Currency } from '@firing/utils';
 import { formatDate } from '@firing/utils';
@@ -32,6 +32,9 @@ export default function Home() {
 
   // 加载数据
   useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     async function loadData() {
       try {
         setIsLoading(true);
@@ -42,32 +45,40 @@ export default function Home() {
 
         // 获取资产和负债
         const [assetsResponse, liabilitiesResponse, activitiesResponse] = await Promise.all([
-          fetch('/api/assets'),
-          fetch('/api/liabilities'),
-          fetch('/api/activity')
+          fetch('/api/assets', { signal }),
+          fetch('/api/liabilities', { signal }),
+          fetch('/api/activity', { signal })
         ]);
 
         const loadedAssets = await assetsResponse.json();
         const loadedLiabilities = await liabilitiesResponse.json();
         const loadedActivities = await activitiesResponse.json();
 
-        setAssets(loadedAssets);
-        setLiabilities(loadedLiabilities);
-        setActivities(loadedActivities);
+        if (!signal.aborted) {
+          setAssets(loadedAssets);
+          setLiabilities(loadedLiabilities);
+          setActivities(loadedActivities);
 
-        // 计算核心指标
-        calculateMetrics(loadedAssets, loadedLiabilities, baseCurrency);
-
-        // 检查缺失的汇率（暂时跳过）
-        // checkMissingRates(loadedAssets, loadedLiabilities, baseCurrency);
+          // 计算核心指标
+          calculateMetrics(loadedAssets, loadedLiabilities, baseCurrency);
+        }
       } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          return;
+        }
         console.error('Failed to load data:', error);
       } finally {
-        setIsLoading(false);
+        if (!signal.aborted) {
+          setIsLoading(false);
+        }
       }
     }
 
     loadData();
+
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   // 计算核心指标
@@ -125,7 +136,7 @@ export default function Home() {
   }
 
   // 生成趋势图数据
-  function generateTrendData() {
+  const trendData = useMemo(() => {
     // 这里简化处理，实际应该从数据库获取历史数据
     const today = new Date();
     const data = [];
@@ -144,7 +155,7 @@ export default function Home() {
     }
 
     return data;
-  }
+  }, [netWorth]);
 
   if (isLoading) {
     return (
@@ -206,7 +217,7 @@ export default function Home() {
           <h2 className="text-lg font-semibold text-slate-900 mb-4">净资产趋势</h2>
           <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-              <AreaChart data={generateTrendData()}>
+              <AreaChart data={trendData}>
                 <defs>
                   <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8}/>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { convertCurrency, formatCurrency } from '@firing/utils';
 import { formatDate } from '@firing/utils';
 
@@ -52,29 +52,43 @@ export default function AssetsPage() {
     // 组件挂载后立即设置isAdding状态为false
     setIsAdding(false);
 
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     async function loadData() {
       try {
         setIsLoading(true);
 
         // 获取资产和账户
         const [assetsResponse, accountsResponse] = await Promise.all([
-          fetch('/api/assets'),
-          fetch('/api/accounts')
+          fetch('/api/assets', { signal }),
+          fetch('/api/accounts', { signal })
         ]);
 
         const loadedAssets = await assetsResponse.json();
         const loadedAccounts = await accountsResponse.json();
 
-        setAssets(loadedAssets);
-        setAccounts(loadedAccounts);
+        if (!signal.aborted) {
+          setAssets(loadedAssets);
+          setAccounts(loadedAccounts);
+        }
       } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          return;
+        }
         console.error('Failed to load data:', error);
       } finally {
-        setIsLoading(false);
+        if (!signal.aborted) {
+          setIsLoading(false);
+        }
       }
     }
 
     loadData();
+
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   // 处理表单输入变化
@@ -221,10 +235,6 @@ export default function AssetsPage() {
     });
     // 直接设置isAdding为true
     setIsAdding(true);
-    // 强制组件重新渲染
-    setTimeout(() => {
-      window.dispatchEvent(new Event('resize'));
-    }, 100);
   }
 
   // 删除资产
@@ -279,7 +289,7 @@ export default function AssetsPage() {
   }
 
   // 过滤资产
-  function getFilteredAssets() {
+  const filteredAssets = useMemo(() => {
     switch (activeFilter) {
       case 'cash':
         return assets.filter(asset => asset.type === 'cash');
@@ -294,7 +304,7 @@ export default function AssetsPage() {
       default:
         return assets;
     }
-  }
+  }, [assets, activeFilter]);
 
   if (isLoading) {
     return (
@@ -317,10 +327,6 @@ export default function AssetsPage() {
             onClick={() => {
               // 直接设置isAdding为true
               setIsAdding(true);
-              // 强制组件重新渲染
-              setTimeout(() => {
-                window.dispatchEvent(new Event('resize'));
-              }, 100);
             }}
             className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
           >
@@ -595,7 +601,7 @@ export default function AssetsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {getFilteredAssets().map((asset) => (
+                {filteredAssets.map((asset) => (
                   <tr key={asset.id} className="hover:bg-slate-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="font-medium text-slate-900">
@@ -671,10 +677,6 @@ export default function AssetsPage() {
                 onClick={() => {
                   // 直接设置isAdding为true
                   setIsAdding(true);
-                  // 强制组件重新渲染
-                  setTimeout(() => {
-                    window.dispatchEvent(new Event('resize'));
-                  }, 100);
                 }}
                 className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
               >

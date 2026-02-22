@@ -30,24 +30,50 @@ export default function ActivityPage() {
 
   // 加载数据
   useEffect(() => {
-    loadActivities();
-  }, [filter]);
+    const controller = new AbortController();
+    const signal = controller.signal;
 
-  // 加载活动数据
-  async function loadActivities() {
-    try {
-      setIsLoading(true);
+    async function fetchActivities() {
+      try {
+        setIsLoading(true);
 
-      // 通过 API 获取活动数据
-      const response = await fetch(`/api/activity?filter=${filter}&page=${page}&pageSize=${pageSize}`);
-      const loadedActivities = await response.json();
+        // 通过 API 获取活动数据
+        const response = await fetch(`/api/activity?filter=${filter}&page=${page}&pageSize=${pageSize}`, { signal });
+        const loadedActivities = await response.json();
 
-      setActivities(loadedActivities);
-      setHasMore(loadedActivities.length === pageSize);
-    } catch (error) {
-      console.error('Failed to load activities:', error);
-    } finally {
-      setIsLoading(false);
+        if (!signal.aborted) {
+          if (page === 1) {
+            setActivities(loadedActivities);
+          } else {
+            setActivities(prev => [...prev, ...loadedActivities]);
+          }
+          setHasMore(loadedActivities.length === pageSize);
+        }
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          return;
+        }
+        console.error('Failed to load activities:', error);
+      } finally {
+        if (!signal.aborted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    fetchActivities();
+
+    return () => {
+      controller.abort();
+    };
+  }, [filter, page]);
+
+  // 处理筛选变化
+  function handleFilterChange(newFilter: typeof filter) {
+    if (filter !== newFilter) {
+      setFilter(newFilter);
+      setPage(1);
+      setActivities([]); // 可选：清空列表以显示加载状态
     }
   }
 
@@ -55,8 +81,6 @@ export default function ActivityPage() {
   function loadMore() {
     if (!isLoading && hasMore) {
       setPage(prev => prev + 1);
-      // 这里简化处理，实际应该实现无限滚动加载
-      loadActivities();
     }
   }
 
@@ -124,25 +148,25 @@ export default function ActivityPage() {
         {/* 筛选器 */}
         <div className="flex space-x-2 mb-8 overflow-x-auto">
           <button
-            onClick={() => setFilter('ALL')}
+            onClick={() => handleFilterChange('ALL')}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === 'ALL' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
           >
             全部
           </button>
           <button
-            onClick={() => setFilter('ASSET')}
+            onClick={() => handleFilterChange('ASSET')}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === 'ASSET' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
           >
             资产
           </button>
           <button
-            onClick={() => setFilter('LIABILITY')}
+            onClick={() => handleFilterChange('LIABILITY')}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === 'LIABILITY' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
           >
             负债
           </button>
           <button
-            onClick={() => setFilter('TRANSACTION')}
+            onClick={() => handleFilterChange('TRANSACTION')}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === 'TRANSACTION' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
           >
             交易

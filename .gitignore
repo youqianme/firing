@@ -43,6 +43,8 @@ Thumbs.db
 # Database files
 data/
 *.db
+*.db-shm
+*.db-wal
 
 # Cache
 .npm-cache/

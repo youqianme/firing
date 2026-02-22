@@ -9,7 +9,21 @@ export class WebDatabaseAdapter implements DatabaseAdapter {
   private inTransaction: boolean = false;
 
   constructor(dbPath: string) {
-    this.db = new Database(dbPath);
+    this.db = new Database(dbPath, {
+      fileMustExist: false,
+      timeout: 5000,
+      verbose: null // 禁用冗余日志
+    });
+    
+    // 只在连接建立时配置一次
+    try {
+      // 启用 WAL 模式以提高并发性能并减少文件锁定冲突
+      this.db.pragma('journal_mode = WAL');
+      // 调整同步模式为 NORMAL，在保证基本安全的前提下减少磁盘 I/O
+      this.db.pragma('synchronous = NORMAL');
+    } catch (error) {
+      console.warn('Failed to set PRAGMA:', error);
+    }
   }
 
   /**

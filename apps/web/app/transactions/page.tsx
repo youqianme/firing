@@ -66,29 +66,43 @@ export default function TransactionsPage() {
 
   // 加载数据
   useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     async function loadData() {
       try {
         setIsLoading(true);
 
         // 通过 API 获取交易和资产
         const [transactionsResponse, assetsResponse] = await Promise.all([
-          fetch('/api/transactions'),
-          fetch('/api/assets')
+          fetch('/api/transactions', { signal }),
+          fetch('/api/assets', { signal })
         ]);
 
         const loadedTransactions = await transactionsResponse.json();
         const loadedAssets = await assetsResponse.json();
 
-        setTransactions(loadedTransactions);
-        setAssets(loadedAssets);
+        if (!signal.aborted) {
+          setTransactions(loadedTransactions);
+          setAssets(loadedAssets);
+        }
       } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          return;
+        }
         console.error('Failed to load data:', error);
       } finally {
-        setIsLoading(false);
+        if (!signal.aborted) {
+          setIsLoading(false);
+        }
       }
     }
 
     loadData();
+
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   // 处理表单输入变化
