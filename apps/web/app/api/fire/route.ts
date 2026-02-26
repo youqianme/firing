@@ -1,12 +1,12 @@
-import { initDatabase } from '../../../lib/database';
+import { initializeDatabase } from '../../../lib/database';
 import { fireConfigRepository } from '../../../lib/dataAccess';
 
 // 初始化数据库
-initDatabase();
+initializeDatabase();
 
 export async function GET() {
   try {
-    const fireConfig = fireConfigRepository.get();
+    const fireConfig = await fireConfigRepository.get();
     return new Response(JSON.stringify(fireConfig), {
       status: 200,
       headers: {
@@ -26,7 +26,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const config = await request.json();
-    const updatedConfig = fireConfigRepository.upsert(config);
+    const updatedConfig = await fireConfigRepository.upsert(config);
     return new Response(JSON.stringify(updatedConfig), {
       status: 200,
       headers: {

@@ -1,8 +1,8 @@
-import { initDatabase } from '../../../lib/database';
+import { initializeDatabase } from '../../../lib/database';
 import { activityRepository } from '../../../lib/dataAccess';
 
 // 初始化数据库
-initDatabase();
+initializeDatabase();
 
 export async function GET(request: Request) {
   try {
@@ -14,9 +14,9 @@ export async function GET(request: Request) {
 
     let activities;
     if (filter === 'ALL') {
-      activities = activityRepository.getAll(pageSize, offset);
+      activities = await activityRepository.getAll(pageSize, offset);
     } else {
-      activities = activityRepository.getByObjectType(filter as any, pageSize, offset);
+      activities = await activityRepository.getByObjectType(filter as any, pageSize, offset);
     }
 
     return new Response(JSON.stringify(activities), {

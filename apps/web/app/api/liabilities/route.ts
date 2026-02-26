@@ -1,15 +1,15 @@
-import { initDatabase } from '../../../lib/database';
+import { initializeDatabase } from '../../../lib/database';
 import {
   liabilityRepository,
   activityRepository
 } from '../../../lib/dataAccess';
 
 // 初始化数据库
-initDatabase();
+initializeDatabase();
 
 export async function GET() {
   try {
-    const liabilities = liabilityRepository.getAll();
+    const liabilities = await liabilityRepository.getAll();
     return new Response(JSON.stringify(liabilities), {
       status: 200,
       headers: {
@@ -29,10 +29,10 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const liability = await request.json();
-    const newLiability = liabilityRepository.create(liability);
+    const newLiability = await liabilityRepository.create(liability);
     
     // 记录活动
-    activityRepository.create({
+    await activityRepository.create({
       action: 'CREATE',
       objectType: 'LIABILITY',
       objectId: newLiability.id,
@@ -72,13 +72,13 @@ export async function PUT(request: Request) {
     }
     
     const liabilityData = await request.json();
-    const existingLiability = liabilityRepository.getById(id);
+    const existingLiability = await liabilityRepository.getById(id);
     
     if (existingLiability) {
-      const updatedLiability = liabilityRepository.update(id, liabilityData);
+      const updatedLiability = await liabilityRepository.update(id, liabilityData);
       if (updatedLiability) {
         // 记录活动
-        activityRepository.create({
+        await activityRepository.create({
           action: 'UPDATE',
           objectType: 'LIABILITY',
           objectId: updatedLiability.id,
@@ -128,12 +128,12 @@ export async function DELETE(request: Request) {
       });
     }
     
-    const existingLiability = liabilityRepository.getById(id);
+    const existingLiability = await liabilityRepository.getById(id);
     if (existingLiability) {
-      const success = liabilityRepository.delete(id);
+      const success = await liabilityRepository.delete(id);
       if (success) {
         // 记录活动
-        activityRepository.create({
+        await activityRepository.create({
           action: 'DELETE',
           objectType: 'LIABILITY',
           objectId: existingLiability.id,

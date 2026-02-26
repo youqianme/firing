@@ -1,19 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
-// 直接在文件中定义所需的类型
-export type AccountType = 'broker' | 'bank' | 'cash' | 'other';
-export type Currency = 'CNY' | 'USD' | 'EUR' | 'JPY' | 'KRW';
-
-export interface Account {
-  id: string;
-  name: string;
-  type: AccountType;
-  currency?: Currency;
-  notes?: string;
-  createdAt: string;
-}
+import { AccountType, Currency, type Account } from './types';
 
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);

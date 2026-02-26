@@ -1,15 +1,15 @@
-import { initDatabase } from '../../../lib/database';
+import { initializeDatabase } from '../../../lib/database';
 import {
   accountRepository,
   activityRepository
 } from '../../../lib/dataAccess';
 
 // 初始化数据库
-initDatabase();
+initializeDatabase();
 
 export async function GET() {
   try {
-    const accounts = accountRepository.getAll();
+    const accounts = await accountRepository.getAll();
     return new Response(JSON.stringify(accounts), {
       status: 200,
       headers: {
@@ -29,10 +29,10 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const accountData = await request.json();
-    const newAccount = accountRepository.create(accountData);
+    const newAccount = await accountRepository.create(accountData);
     
     // 记录活动
-    activityRepository.create({
+    await activityRepository.create({
       action: 'CREATE',
       objectType: 'ACCOUNT',
       objectId: newAccount.id,
@@ -72,13 +72,13 @@ export async function PUT(request: Request) {
     }
     
     const accountData = await request.json();
-    const existingAccount = accountRepository.getById(id);
+    const existingAccount = await accountRepository.getById(id);
     
     if (existingAccount) {
-      const updatedAccount = accountRepository.update(id, accountData);
+      const updatedAccount = await accountRepository.update(id, accountData);
       if (updatedAccount) {
         // 记录活动
-        activityRepository.create({
+        await activityRepository.create({
           action: 'UPDATE',
           objectType: 'ACCOUNT',
           objectId: updatedAccount.id,
@@ -126,12 +126,12 @@ export async function DELETE(request: Request) {
       });
     }
     
-    const existingAccount = accountRepository.getById(id);
+    const existingAccount = await accountRepository.getById(id);
     if (existingAccount) {
-      const success = accountRepository.delete(id);
+      const success = await accountRepository.delete(id);
       if (success) {
         // 记录活动
-        activityRepository.create({
+        await activityRepository.create({
           action: 'DELETE',
           objectType: 'ACCOUNT',
           objectId: existingAccount.id,

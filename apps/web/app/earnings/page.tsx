@@ -1,10 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { formatCurrency } from '../../utils/currency';
-
-// 直接在文件中定义所需的类型
-export type Currency = 'CNY' | 'USD' | 'EUR' | 'JPY' | 'KRW';
+import { formatCurrency } from '@firing/utils';
+import { Currency } from './types';
 
 export default function EarningsPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -210,7 +208,7 @@ export default function EarningsPage() {
                   <span className="text-sm font-medium text-slate-900">{day}</span>
                   {dayEarnings && (
                     <span className="text-xs font-medium mt-1">
-                      {dayEarnings.total > 0 ? '+' : ''}{dayEarnings.total.toFixed(0)}
+                      {dayEarnings.total > 0 ? '+' : ''}{dayEarnings.total.toFixed(2)}
                     </span>
                   )}
                 </div>

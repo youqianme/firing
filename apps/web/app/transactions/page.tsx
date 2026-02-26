@@ -1,53 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { formatCurrency } from '../../utils/currency';
-import { formatDate } from '../../utils/helpers';
-
-// 直接在文件中定义所需的类型
-export type Currency = 'CNY' | 'USD' | 'EUR' | 'JPY' | 'KRW';
-export type AssetType = 'cash' | 'bank' | 'investment' | 'real_estate' | 'other';
-export type TransactionType = 'transfer' | 'redeem';
-export interface Asset {
-  id: string;
-  name: string;
-  type: AssetType;
-  currency: Currency;
-  amount: number;
-  includeInFire: boolean;
-  interestRate?: number;
-  startDate?: string;
-  endDate?: string;
-}
-export interface Transaction {
-  id: string;
-  type: TransactionType;
-  fromAssetId?: string;
-  toAssetId?: string;
-  amount: number;
-  currency: Currency;
-  date: string;
-  notes?: string;
-  createdAt: string;
-}
-
-// 资产类型常量
-export const AssetType = {
-  CASH: 'cash' as AssetType,
-  TIME_DEPOSIT: 'bank' as AssetType,
-  STOCK: 'investment' as AssetType,
-  FUND: 'investment' as AssetType,
-  GOLD: 'investment' as AssetType,
-  REAL_ESTATE: 'real_estate' as AssetType,
-  VEHICLE: 'other' as AssetType,
-  LUXURY: 'other' as AssetType,
-} as const;
-
-// 交易类型常量
-export const TransactionType = {
-  TRANSFER: 'transfer' as TransactionType,
-  REDEEM: 'redeem' as TransactionType,
-} as const;
+import { formatCurrency } from '@firing/utils';
+import { formatDate } from '@firing/utils';
+import { AssetType, TransactionType, type Asset, type Transaction, type Currency } from './types';
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -64,29 +20,43 @@ export default function TransactionsPage() {
 
   // 加载数据
   useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     async function loadData() {
       try {
         setIsLoading(true);
 
         // 通过 API 获取交易和资产
         const [transactionsResponse, assetsResponse] = await Promise.all([
-          fetch('/api/transactions'),
-          fetch('/api/assets')
+          fetch('/api/transactions', { signal }),
+          fetch('/api/assets', { signal })
         ]);
 
         const loadedTransactions = await transactionsResponse.json();
         const loadedAssets = await assetsResponse.json();
 
-        setTransactions(loadedTransactions);
-        setAssets(loadedAssets);
+        if (!signal.aborted) {
+          setTransactions(loadedTransactions);
+          setAssets(loadedAssets);
+        }
       } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          return;
+        }
         console.error('Failed to load data:', error);
       } finally {
-        setIsLoading(false);
+        if (!signal.aborted) {
+          setIsLoading(false);
+        }
       }
     }
 
     loadData();
+
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   // 处理表单输入变化
@@ -289,7 +259,7 @@ export default function TransactionsPage() {
 
   // 获取定期存款资产列表
   function getTimeDepositAssets(): Asset[] {
-    return assets.filter(a => a.type === AssetType.TIME_DEPOSIT);
+    return assets.filter(a => a.type === AssetType.TIME_DEPOSIT || a.type === AssetType.TIME_DEPOSIT_ALT);
   }
 
   if (isLoading) {

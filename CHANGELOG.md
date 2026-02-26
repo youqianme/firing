@@ -1,5 +1,84 @@
 # 有钱么财务应用变更日志
 
+## [1.0.3] - 2026-02-23
+
+### ⚡️ 性能优化
+
+- **前端渲染优化**
+  - 在 `AssetsPage` 中引入 `useMemo` 缓存资产列表过滤逻辑，避免表单输入时的无效重渲染，彻底解决打字卡顿问题
+  - 在首页引入 `useMemo` 缓存图表数据，减少图表组件的不必要重绘
+  - 在多个核心页面 (`AssetsPage`, `TransactionsPage`, `ActivityPage`, `HomePage`) 的 `useEffect` 中引入 `AbortController`，确保组件卸载时自动取消未完成的 API 请求，防止竞态条件和内存泄漏
+  - 移除导致全局布局抖动（Layout Thrashing）的高成本 `window.dispatchEvent` 调用
+
+- **后端与数据库**
+  - 优化数据库连接初始化逻辑，将 `initializeDatabase()` 移入 API 路由处理函数内部，避免模块加载时的并发连接竞争
+  - 为 SQLite 的 `PRAGMA` 设置添加防御性 `try-catch` 块，增强热重载场景下的文件锁稳定性
+
+- **构建与开发环境**
+  - 在 `next.config.mjs` 中禁用 `reactStrictMode`，减少开发模式下的双重渲染开销
+  - 将 `better-sqlite3` 配置为 Webpack 和 Next.js 的外部依赖 (`externals`), 避免打包原生模块导致的编译 CPU 飙升
+  - 移除启动脚本中的 `MALLOC_TRACING` 环境变量，消除 Node.js 调试警告
+
+### 🐛 问题修复
+
+- **配置兼容性**
+  - 适配 Next.js 16 配置，将 `experimental.serverComponentsExternalPackages` 迁移至顶层 `serverExternalPackages`
+  - 更新 `dev` 脚本为 `next dev --webpack`，解决与默认 Turbopack 的配置冲突
+
+- **Git 配置**
+  - 更新 `.gitignore` 规则，忽略 SQLite WAL 模式产生的临时文件 (`*.db-shm`, `*.db-wal`)
+
+## [1.0.2] - 2026-02-17
+
+### ✨ 功能更新
+
+- **生成测试数据功能**
+  - 在设置页面添加“生成测试数据”按钮，位于数据管理卡片中
+  - 实现一键生成覆盖所有功能的测试数据，包含账户、资产、负债、交易等多种数据类型
+  - 添加详细的确认对话框，包含测试数据的详细说明
+  - 实现加载状态指示器，防止用户重复点击
+  - 实现成功/失败的消息提示，提升用户体验
+
+- **后端 API 实现**
+  - 在 `/api/settings/test-data` 路径下实现生成测试数据的 API 端点
+  - 使用 `INSERT OR REPLACE` 语句避免主键约束冲突
+  - 实现事务处理，确保数据生成的原子性
+  - 测试数据生成过程在 1 秒内完成，符合性能要求
+
+- **用户体验优化**
+  - 优化设置页面的网格布局，提升视觉效果
+  - 确保响应式设计，在不同屏幕尺寸下正常工作
+  - 改进卡片式设计，提升用户体验
+  - 优化按钮命名，将“添加测试数据”改为“生成测试数据”以更准确地反映其功能
+
+- **功能修复**
+  - 修复确认对话框行为问题，确保所有操作只在用户确认后执行
+  - 添加详细的控制台日志，便于调试和问题定位
+  - 确保网络请求只在用户确认后执行，防止误操作
+
+## [1.0.1] - 2026-02-16
+
+### 📁 结构调整
+
+- **删除无用文件**
+  - 删除 apps/web/app/test.tsx 测试文件
+  - 删除 apps/mobile/index.ts 入口文件
+  - 删除 apps/mobile/package-lock.json 文件
+  - 删除 openspec 目录
+
+- **优化目录结构**
+  - 创建 config/ 目录，用于存放环境变量配置文件
+  - 创建 packages/ui/ 目录，用于共享 UI 组件
+
+- **更新配置文件**
+  - 更新根目录 package.json，添加 config/ 目录到 workspaces
+  - 为 UI 组件包创建 package.json 文件
+
+- **更新文档**
+  - 更新 README.md 文件，反映项目结构的变化
+  - 更新 PROJECT_STRUCTURE.md 文件，详细说明新的目录结构
+  - 更新 CHANGELOG.md 文件，记录本次结构调整的变更
+
 ## [1.0.0] - 2026-02-16
 
 ### 🎉 初始版本
@@ -82,5 +161,8 @@
   - 创建共享工具函数包
   - 创建共享数据访问层包
 
+[1.0.3]: #
+[1.0.2]: #
+[1.0.1]: #
 [1.0.0]: #
 [0.1.0]: #

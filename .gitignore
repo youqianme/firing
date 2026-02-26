@@ -43,6 +43,8 @@ Thumbs.db
 # Database files
 data/
 *.db
+*.db-shm
+*.db-wal
 
 # Cache
 .npm-cache/
@@ -67,6 +69,7 @@ temp/
 # Docker
 .dockerignore
 Dockerfile*
+!Dockerfile
 !Dockerfile.dev
 !Dockerfile.prod
 

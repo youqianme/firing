@@ -15,17 +15,26 @@ const exchangeRates: Record<Currency, number> = {
  */
 export const convertCurrency = (
   amount: number,
-  fromCurrency: Currency,
-  toCurrency: Currency
+  fromCurrency: string,
+  toCurrency: string
 ): number => {
   if (fromCurrency === toCurrency) {
     return amount;
   }
   
+  // 检查货币类型是否有效
+  const fromRate = exchangeRates[fromCurrency as Currency];
+  const toRate = exchangeRates[toCurrency as Currency];
+  
+  if (!fromRate || !toRate) {
+    console.warn(`Invalid currency type: ${fromCurrency} or ${toCurrency}`);
+    return amount;
+  }
+  
   // 先转换为CNY
-  const amountInCNY = amount / exchangeRates[fromCurrency];
+  const amountInCNY = amount / fromRate;
   // 再转换为目标货币
-  return amountInCNY * exchangeRates[toCurrency];
+  return amountInCNY * toRate;
 };
 
 /**
@@ -33,7 +42,7 @@ export const convertCurrency = (
  */
 export const formatCurrency = (
   amount: number,
-  currency: Currency = 'CNY',
+  currency: string = 'CNY',
   options: Intl.NumberFormatOptions = {}
 ): string => {
   const defaultOptions: Intl.NumberFormatOptions = {
@@ -52,8 +61,8 @@ export const formatCurrency = (
 /**
  * 获取货币符号
  */
-export const getCurrencySymbol = (currency: Currency): string => {
-  const symbols: Record<Currency, string> = {
+export const getCurrencySymbol = (currency: string): string => {
+  const symbols: Record<string, string> = {
     CNY: '¥',
     USD: '$',
     EUR: '€',
@@ -61,15 +70,15 @@ export const getCurrencySymbol = (currency: Currency): string => {
     KRW: '₩',
   };
   
-  return symbols[currency];
+  return symbols[currency] || currency;
 };
 
 /**
  * 将所有资产转换为指定货币并求和
  */
 export const sumAssetsByCurrency = (
-  assets: Array<{ amount: number; currency: Currency }>,
-  targetCurrency: Currency = 'CNY'
+  assets: Array<{ amount: number; currency: string }>,
+  targetCurrency: string = 'CNY'
 ): number => {
   return assets.reduce((sum, asset) => {
     return sum + convertCurrency(asset.amount, asset.currency, targetCurrency);
@@ -80,8 +89,8 @@ export const sumAssetsByCurrency = (
  * 将所有负债转换为指定货币并求和
  */
 export const sumLiabilitiesByCurrency = (
-  liabilities: Array<{ amount: number; currency: Currency }>,
-  targetCurrency: Currency = 'CNY'
+  liabilities: Array<{ amount: number; currency: string }>,
+  targetCurrency: string = 'CNY'
 ): number => {
   return liabilities.reduce((sum, liability) => {
     return sum + convertCurrency(liability.amount, liability.currency, targetCurrency);

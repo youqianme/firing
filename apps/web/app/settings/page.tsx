@@ -1,10 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { formatCurrency } from '../../utils/currency';
-
-// 直接在文件中定义所需的类型
-export type Currency = 'CNY' | 'USD' | 'EUR' | 'JPY' | 'KRW';
+import { formatCurrency } from '@firing/utils';
+import { Currency } from './types';
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<any>({
@@ -14,6 +12,7 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState('');
+  const [isGeneratingTestData, setIsGeneratingTestData] = useState(false);
 
   // 加载设置
   useEffect(() => {
@@ -138,21 +137,89 @@ export default function SettingsPage() {
 
   // 清空数据
   async function clearData() {
-    if (window.confirm('确定要清空所有数据吗？此操作不可恢复！')) {
+    console.log('=== clearData function called ===');
+    console.log('1. Function started at:', new Date().toISOString());
+    
+    // 显示确认对话框
+    console.log('2. About to show confirm dialog');
+    const confirmed = window.confirm('确定要清空所有数据吗？此操作不可恢复！');
+    
+    console.log('3. Confirm dialog result:', confirmed);
+    
+    if (confirmed) {
+      console.log('4. User confirmed, proceeding to clear data');
       try {
+        console.log('5. Calling clear data API at:', new Date().toISOString());
         // 通过 API 清空数据
         const response = await fetch('/api/settings', {
           method: 'DELETE'
         });
         
+        console.log('6. API response received, status:', response.status);
+        
         const result = await response.json();
+        console.log('7. API response parsed successfully:', result);
         setMessage('数据已清空');
         setTimeout(() => setMessage(''), 2000);
+        console.log('8. Data cleared successfully');
       } catch (error) {
-        console.error('Failed to clear data:', error);
+        console.error('9. Failed to clear data:', error);
         setMessage('清空失败');
         setTimeout(() => setMessage(''), 2000);
+      } finally {
+        console.log('10. Function completed at:', new Date().toISOString());
+        console.log('=== clearData function ended ===');
       }
+    } else {
+      console.log('4. User cancelled, exiting function');
+      console.log('=== clearData function ended (cancelled) ===');
+    }
+  }
+
+  // 添加测试数据
+  async function addTestData() {
+    console.log('=== addTestData function called ===');
+    console.log('1. Function started at:', new Date().toISOString());
+    
+    // 显示确认对话框
+    console.log('2. About to show confirm dialog');
+    const confirmed = window.confirm('确定要添加测试数据吗？\n\n这将生成覆盖所有功能的测试数据，包括：\n- 账户数据（支付宝、微信、银行卡等）\n- 市场数据（汇率、黄金价格）\n- 资产数据（现金、投资、定期存款等）\n- 负债数据（信用卡、个人贷款）\n- 交易数据（转账、消费、收入）\n- FIRE 配置数据\n- 活动记录\n\n测试数据不会覆盖现有数据（如果存在）。');
+    
+    console.log('3. Confirm dialog result:', confirmed);
+    
+    if (confirmed) {
+      console.log('4. User confirmed, proceeding to generate test data');
+      setIsGeneratingTestData(true);
+      try {
+        console.log('5. Calling test data API at:', new Date().toISOString());
+        // 通过 API 添加测试数据
+        const response = await fetch('/api/settings/test-data', {
+          method: 'POST'
+        });
+        
+        console.log('6. API response received, status:', response.status);
+        
+        if (!response.ok) {
+          throw new Error('API 请求失败');
+        }
+        
+        const result = await response.json();
+        console.log('7. API response parsed successfully:', result);
+        setMessage('测试数据添加成功！您现在可以浏览各个模块查看示例数据。');
+        setTimeout(() => setMessage(''), 3000);
+        console.log('8. Test data generation completed successfully');
+      } catch (error) {
+        console.error('9. Failed to add test data:', error);
+        setMessage('添加测试数据失败，请稍后重试。');
+        setTimeout(() => setMessage(''), 3000);
+      } finally {
+        setIsGeneratingTestData(false);
+        console.log('10. Function completed at:', new Date().toISOString());
+        console.log('=== addTestData function ended ===');
+      }
+    } else {
+      console.log('4. User cancelled, exiting function');
+      console.log('=== addTestData function ended (cancelled) ===');
     }
   }
 
@@ -260,55 +327,62 @@ export default function SettingsPage() {
         <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-8">
           <h2 className="text-xl font-semibold text-slate-900 mb-6">数据管理</h2>
           
-          <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* 导出数据 */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                导出数据
-              </label>
+            <div className="bg-slate-50 p-6 rounded-xl">
+              <h3 className="text-sm font-medium text-slate-700 mb-3">导出数据</h3>
               <button
                 onClick={exportData}
-                className="bg-slate-200 text-slate-700 px-6 py-2 rounded-lg font-medium hover:bg-slate-300 transition-colors"
+                className="w-full bg-slate-200 text-slate-700 px-6 py-2 rounded-lg font-medium hover:bg-slate-300 transition-colors mb-2"
               >
                 导出 JSON
               </button>
-              <p className="text-sm text-slate-500 mt-1">导出所有资产、负债、交易和设置数据</p>
+              <p className="text-xs text-slate-500">导出所有资产、负债、交易和设置数据</p>
             </div>
 
             {/* 导入数据 */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                导入数据
-              </label>
-              <div className="flex items-center space-x-4">
+            <div className="bg-slate-50 p-6 rounded-xl">
+              <h3 className="text-sm font-medium text-slate-700 mb-3">导入数据</h3>
+              <div className="space-y-2">
                 <input
                   type="file"
                   accept=".json"
                   onChange={handleImportData}
-                  className="px-4 py-2 border border-slate-200 rounded-lg"
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg"
                 />
                 <button
-                    onClick={() => (document.querySelector('input[type="file"]') as HTMLElement | null)?.click()}
-                    className="bg-slate-200 text-slate-700 px-6 py-2 rounded-lg font-medium hover:bg-slate-300 transition-colors"
-                  >
+                  onClick={() => (document.querySelector('input[type="file"]') as HTMLElement | null)?.click()}
+                  className="w-full bg-slate-200 text-slate-700 px-6 py-2 rounded-lg font-medium hover:bg-slate-300 transition-colors"
+                >
                   选择文件
                 </button>
               </div>
-              <p className="text-sm text-slate-500 mt-1">从之前导出的 JSON 文件恢复数据</p>
+              <p className="text-xs text-slate-500 mt-2">从之前导出的 JSON 文件恢复数据</p>
             </div>
 
             {/* 清空数据 */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                清空数据
-              </label>
+            <div className="bg-slate-50 p-6 rounded-xl">
+              <h3 className="text-sm font-medium text-slate-700 mb-3">清空数据</h3>
               <button
                 onClick={clearData}
-                className="bg-red-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors"
+                className="w-full bg-red-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors mb-2"
               >
                 清空所有数据
               </button>
-              <p className="text-sm text-slate-500 mt-1">危险操作，此操作不可恢复</p>
+              <p className="text-xs text-slate-500">危险操作，此操作不可恢复</p>
+            </div>
+
+            {/* 生成测试数据 */}
+            <div className="bg-slate-50 p-6 rounded-xl">
+              <h3 className="text-sm font-medium text-slate-700 mb-3">生成测试数据</h3>
+              <button
+                onClick={addTestData}
+                disabled={isGeneratingTestData}
+                className={`w-full px-6 py-2 rounded-lg font-medium transition-colors mb-2 ${isGeneratingTestData ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'}`}
+              >
+                {isGeneratingTestData ? '生成中...' : '生成测试数据'}
+              </button>
+              <p className="text-xs text-slate-500">一键生成覆盖所有功能的测试数据，快速体验系统功能</p>
             </div>
           </div>
         </div>

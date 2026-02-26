@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { formatCurrency } from '../../utils/currency';
+import { formatCurrency } from '@firing/utils';
 
 export default function FirePage() {
   const [fireConfig, setFireConfig] = useState<any>(null);

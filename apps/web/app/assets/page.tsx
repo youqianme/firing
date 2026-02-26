@@ -1,30 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { convertCurrency, formatCurrency } from '../../utils/currency';
-import { formatDate } from '../../utils/helpers';
-
-// 直接在文件中定义所需的类型
-export type Currency = 'CNY' | 'USD' | 'EUR' | 'JPY' | 'KRW';
-export type AssetType = 'cash' | 'bank' | 'investment' | 'real_estate' | 'other';
-export type InvestmentSubType = 'stock' | 'fund' | 'gold' | 'other';
-export interface Asset {
-  id: string;
-  name: string;
-  type: AssetType;
-  subType?: InvestmentSubType;
-  currency: Currency;
-  amount: number;
-  includeInFire: boolean;
-  accountId?: string;
-  interestRate?: number;
-  startDate?: string;
-  endDate?: string;
-  valuationMethod: string;
-  updatedAt: string;
-  createdAt: string;
-  notes?: string;
-}
+import { useEffect, useState, useMemo } from 'react';
+import { convertCurrency, formatCurrency } from '@firing/utils';
+import { formatDate } from '@firing/utils';
+import { Currency, AssetType, InvestmentSubType, type Asset } from './types';
 
 export default function AssetsPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -49,29 +28,46 @@ export default function AssetsPage() {
 
   // 加载数据
   useEffect(() => {
+    // 组件挂载后立即设置isAdding状态为false
+    setIsAdding(false);
+
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     async function loadData() {
       try {
         setIsLoading(true);
 
         // 获取资产和账户
         const [assetsResponse, accountsResponse] = await Promise.all([
-          fetch('/api/assets'),
-          fetch('/api/accounts')
+          fetch('/api/assets', { signal }),
+          fetch('/api/accounts', { signal })
         ]);
 
         const loadedAssets = await assetsResponse.json();
         const loadedAccounts = await accountsResponse.json();
 
-        setAssets(loadedAssets);
-        setAccounts(loadedAccounts);
+        if (!signal.aborted) {
+          setAssets(loadedAssets);
+          setAccounts(loadedAccounts);
+        }
       } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          return;
+        }
         console.error('Failed to load data:', error);
       } finally {
-        setIsLoading(false);
+        if (!signal.aborted) {
+          setIsLoading(false);
+        }
       }
     }
 
     loadData();
+
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   // 处理表单输入变化
@@ -216,6 +212,7 @@ export default function AssetsPage() {
       endDate: asset.endDate || '',
       notes: asset.notes || ''
     });
+    // 直接设置isAdding为true
     setIsAdding(true);
   }
 
@@ -271,7 +268,7 @@ export default function AssetsPage() {
   }
 
   // 过滤资产
-  function getFilteredAssets() {
+  const filteredAssets = useMemo(() => {
     switch (activeFilter) {
       case 'cash':
         return assets.filter(asset => asset.type === 'cash');
@@ -286,7 +283,7 @@ export default function AssetsPage() {
       default:
         return assets;
     }
-  }
+  }, [assets, activeFilter]);
 
   if (isLoading) {
     return (
@@ -306,7 +303,10 @@ export default function AssetsPage() {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-slate-900">资产管理</h1>
           <button
-            onClick={() => setIsAdding(true)}
+            onClick={() => {
+              // 直接设置isAdding为true
+              setIsAdding(true);
+            }}
             className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
           >
             新增资产
@@ -314,46 +314,48 @@ export default function AssetsPage() {
         </div>
 
         {/* 资产类型筛选 */}
-        <div className="mb-6 overflow-x-auto">
-          <div className="flex space-x-2 min-w-max">
-            <button 
-              onClick={() => setActiveFilter('all')}
-              className={`px-4 py-2 rounded-lg ${activeFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
-            >
-              全部资产
-            </button>
-            <button 
-              onClick={() => setActiveFilter('cash')}
-              className={`px-4 py-2 rounded-lg ${activeFilter === 'cash' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
-            >
-              现金
-            </button>
-            <button 
-              onClick={() => setActiveFilter('bank')}
-              className={`px-4 py-2 rounded-lg ${activeFilter === 'bank' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
-            >
-              定期
-            </button>
-            <button 
-              onClick={() => setActiveFilter('investment')}
-              className={`px-4 py-2 rounded-lg ${activeFilter === 'investment' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
-            >
-              投资
-            </button>
-            <button 
-              onClick={() => setActiveFilter('real_estate')}
-              className={`px-4 py-2 rounded-lg ${activeFilter === 'real_estate' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
-            >
-              房产
-            </button>
-            <button 
-              onClick={() => setActiveFilter('other')}
-              className={`px-4 py-2 rounded-lg ${activeFilter === 'other' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
-            >
-              其他
-            </button>
+        {!isAdding && (
+          <div className="mb-6 overflow-x-auto">
+            <div className="flex space-x-2 min-w-max">
+              <button 
+                onClick={() => setActiveFilter('all')}
+                className={`px-4 py-2 rounded-lg ${activeFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
+              >
+                全部资产
+              </button>
+              <button 
+                onClick={() => setActiveFilter('cash')}
+                className={`px-4 py-2 rounded-lg ${activeFilter === 'cash' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
+              >
+                现金
+              </button>
+              <button 
+                onClick={() => setActiveFilter('bank')}
+                className={`px-4 py-2 rounded-lg ${activeFilter === 'bank' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
+              >
+                定期
+              </button>
+              <button 
+                onClick={() => setActiveFilter('investment')}
+                className={`px-4 py-2 rounded-lg ${activeFilter === 'investment' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
+              >
+                投资
+              </button>
+              <button 
+                onClick={() => setActiveFilter('real_estate')}
+                className={`px-4 py-2 rounded-lg ${activeFilter === 'real_estate' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
+              >
+                房产
+              </button>
+              <button 
+                onClick={() => setActiveFilter('other')}
+                className={`px-4 py-2 rounded-lg ${activeFilter === 'other' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
+              >
+                其他
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* 新增/编辑资产表单 */}
         {isAdding && (
@@ -578,7 +580,7 @@ export default function AssetsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {getFilteredAssets().map((asset) => (
+                {filteredAssets.map((asset) => (
                   <tr key={asset.id} className="hover:bg-slate-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="font-medium text-slate-900">
@@ -598,8 +600,8 @@ export default function AssetsPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
                         {asset.type === 'cash' ? '现金' :
-                         asset.type === 'bank' ? '定期' :
-                         asset.type === 'investment' ? 
+                         asset.type === 'bank' || asset.type === 'time_deposit' ? '定期' :
+                         asset.type === 'investment' || asset.type === 'commodity' ? 
                            (asset.subType === 'stock' ? '股票' :
                             asset.subType === 'fund' ? '基金' :
                             asset.subType === 'gold' ? '黄金' : '投资') :
@@ -651,7 +653,10 @@ export default function AssetsPage() {
                 点击上方「新增资产」按钮开始管理您的资产
               </p>
               <button
-                onClick={() => setIsAdding(true)}
+                onClick={() => {
+                  // 直接设置isAdding为true
+                  setIsAdding(true);
+                }}
                 className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
               >
                 新增资产
