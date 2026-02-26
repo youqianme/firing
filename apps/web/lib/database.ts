@@ -1,25 +1,44 @@
-import { DatabaseManager } from '@firing/data-access';
+import { DatabaseManager, DatabaseAdapter } from '@firing/data-access';
 import { WebDatabaseAdapter } from './database-adapter';
+import { LibsqlDatabaseAdapter } from './libsql-adapter';
+import { NeonDatabaseAdapter } from './neon-adapter';
 import path from 'path';
 import fs from 'fs';
 
-// 数据库路径
-const DB_PATH = process.env.DATABASE_URL || path.join(process.cwd(), 'dev.db');
-
-// 确保数据库目录存在
-const dbDir = path.dirname(DB_PATH);
-if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
-}
-
 // 全局单例缓存，防止热重载时重复创建连接
-let adapter: WebDatabaseAdapter;
+let adapter: DatabaseAdapter;
 let dbManager: DatabaseManager;
 
 // @ts-ignore
 if (!global.dbManager) {
-  // 创建数据库适配器
-  adapter = new WebDatabaseAdapter(DB_PATH);
+  // 1. 检查是否配置了 Neon / Postgres 环境变量 (Vercel Postgres)
+  if (process.env.POSTGRES_URL || process.env.NEON_DATABASE_URL) {
+    const connectionString = process.env.POSTGRES_URL || process.env.NEON_DATABASE_URL || '';
+    console.log('Using Neon (Postgres) database adapter');
+    adapter = new NeonDatabaseAdapter(connectionString);
+  }
+  // 2. 检查是否配置了 LibSQL/Turso 环境变量
+  else if (process.env.TURSO_DATABASE_URL || process.env.LIBSQL_URL) {
+    const url = process.env.TURSO_DATABASE_URL || process.env.LIBSQL_URL || '';
+    const authToken = process.env.TURSO_AUTH_TOKEN || process.env.LIBSQL_AUTH_TOKEN;
+    console.log('Using LibSQL/Turso database adapter');
+    adapter = new LibsqlDatabaseAdapter(url, authToken);
+  } 
+  // 3. 默认使用本地 SQLite
+  else {
+    // 数据库路径
+    const DB_PATH = process.env.DATABASE_URL || path.join(process.cwd(), 'dev.db');
+    
+    // 确保数据库目录存在
+    const dbDir = path.dirname(DB_PATH);
+    if (!fs.existsSync(dbDir)) {
+      fs.mkdirSync(dbDir, { recursive: true });
+    }
+
+    console.log('Using local SQLite database adapter');
+    adapter = new WebDatabaseAdapter(DB_PATH);
+  }
+
   // 创建数据库管理器
   dbManager = DatabaseManager.getInstance(adapter);
   // @ts-ignore

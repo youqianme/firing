@@ -3,22 +3,7 @@
 import { useEffect, useState } from 'react';
 import { formatCurrency } from '@firing/utils';
 import { formatDateTime } from '@firing/utils';
-
-// 直接在文件中定义所需的类型
-export type Currency = 'CNY' | 'USD' | 'EUR' | 'JPY' | 'KRW';
-export type Activity = {
-  id: string;
-  action: string;
-  objectType: string;
-  objectId: string;
-  objectName: string;
-  amount: number;
-  currency: Currency;
-  delta?: number;
-  oldAmount?: number;
-  notes?: string;
-  createdAt: string;
-};
+import { Currency, type Activity } from './types';
 
 export default function ActivityPage() {
   const [activities, setActivities] = useState<Activity[]>([]);

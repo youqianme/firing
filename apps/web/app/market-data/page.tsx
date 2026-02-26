@@ -1,9 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
-// 直接在文件中定义所需的类型
-export type Currency = 'CNY' | 'USD' | 'EUR' | 'JPY' | 'KRW';
+import { Currency } from './types';
 
 export default function MarketDataPage() {
   const [marketData, setMarketData] = useState({

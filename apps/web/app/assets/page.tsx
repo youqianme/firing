@@ -3,28 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { convertCurrency, formatCurrency } from '@firing/utils';
 import { formatDate } from '@firing/utils';
-
-// 直接在文件中定义所需的类型
-export type Currency = 'CNY' | 'USD' | 'EUR' | 'JPY' | 'KRW';
-export type AssetType = 'cash' | 'bank' | 'time_deposit' | 'investment' | 'commodity' | 'real_estate' | 'other';
-export type InvestmentSubType = 'stock' | 'fund' | 'gold' | 'other';
-export interface Asset {
-  id: string;
-  name: string;
-  type: AssetType;
-  subType?: InvestmentSubType;
-  currency: Currency;
-  amount: number;
-  includeInFire: boolean;
-  accountId?: string;
-  interestRate?: number;
-  startDate?: string;
-  endDate?: string;
-  valuationMethod: string;
-  updatedAt: string;
-  createdAt: string;
-  notes?: string;
-}
+import { Currency, AssetType, InvestmentSubType, type Asset } from './types';
 
 export default function AssetsPage() {
   const [assets, setAssets] = useState<Asset[]>([]);

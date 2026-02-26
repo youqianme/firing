@@ -4,14 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
+    "@firing/data-access": "1.0.0",
     "@firing/types": "1.0.0",
     "@firing/utils": "1.0.0",
-    "@firing/data-access": "1.0.0",
+    "@libsql/client": "^0.17.0",
+    "@neondatabase/serverless": "^1.0.2",
     "@types/better-sqlite3": "^7.6.13",
     "better-sqlite3": "^12.6.2",
     "date-fns": "^4.1.0",
