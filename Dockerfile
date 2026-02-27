@@ -1,14 +1,14 @@
 # 使用华为云镜像代理解决国内网络问题
-FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/node:22-alpine AS builder
+FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/node:22-slim AS builder
 
 # 设置工作目录
 WORKDIR /app
 
-# 替换 Alpine 软件源为阿里云镜像源，解决国内网络问题
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+# 替换 Debian 软件源为阿里云镜像源，解决国内网络问题
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources
 
 # 安装构建依赖 (better-sqlite3 需要 python3, make, g++)
-RUN apk add --no-cache libc6-compat python3 make g++
+RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 
 # 配置npm注册表为中国友好的源
 RUN npm config set registry "https://registry.npmmirror.com"
@@ -36,13 +36,13 @@ COPY . .
 RUN npm run build:web
 
 # 使用华为云镜像代理解决国内网络问题
-FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/node:22-alpine AS runner
+FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/node:22-slim AS runner
 
 # 设置工作目录
 WORKDIR /app
 
-# 替换 Alpine 软件源为阿里云镜像源，解决国内网络问题
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+# 替换 Debian 软件源为阿里云镜像源，解决国内网络问题
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources
 
 # 设置环境变量
 ENV NODE_ENV=production
@@ -53,11 +53,12 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 # 安装运行时依赖
-RUN apk add --no-cache libc6-compat
+# Debian 不需要 libc6-compat，因为它是基于 glibc 的
+# RUN apk add --no-cache libc6-compat
 
 # 创建非 root 用户
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN groupadd -g 1001 nodejs
+RUN useradd -u 1001 -g nodejs -s /bin/sh -m nextjs
 
 # 创建数据目录并设置权限
 RUN mkdir -p /app/data && chown nextjs:nodejs /app/data

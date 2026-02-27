@@ -10,6 +10,11 @@ services:
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_APP_ENV=development
+      # 数据库配置 - 会从宿主机环境变量中读取
+      - NEON_DATABASE_URL
+      - POSTGRES_URL
+      - TURSO_DATABASE_URL
+      - TURSO_AUTH_TOKEN
     volumes:
       - .:/app
       - /app/node_modules
@@ -27,6 +32,11 @@ services:
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_APP_ENV=production
+      # 数据库配置 - 会从宿主机环境变量中读取
+      - NEON_DATABASE_URL
+      - POSTGRES_URL
+      - TURSO_DATABASE_URL
+      - TURSO_AUTH_TOKEN
     volumes:
       - ./data:/app/data
     command: npm run start:web

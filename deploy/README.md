@@ -87,9 +87,23 @@ deploy/
 
 ## 环境变量
 
-项目使用以下环境变量：
+项目使用以下环境变量，可以通过 `.env.production` 文件或系统环境变量进行配置：
+
+### 基础配置
 - `NODE_ENV`：环境类型（development/production）
 - `NEXT_PUBLIC_APP_ENV`：应用环境（development/production）
+
+### 数据库配置（可选，默认使用本地 SQLite）
+如果您希望使用外部数据库（如 Neon 或 Turso），请配置以下环境变量：
+
+#### 选项 A: Neon (Postgres)
+- `NEON_DATABASE_URL` 或 `POSTGRES_URL`：Neon 数据库连接字符串（例如 `postgres://user:pass@host/db?sslmode=require`）
+
+#### 选项 B: Turso (LibSQL)
+- `TURSO_DATABASE_URL`：Turso 数据库连接 URL（例如 `libsql://your-db.turso.io`）
+- `TURSO_AUTH_TOKEN`：Turso 认证 Token
+
+**注意**：如果不配置上述数据库环境变量，应用将默认使用本地 SQLite 文件数据库，数据将存储在 `./data` 目录中。
 
 环境变量配置文件：
 - `.env.example`：环境变量示例文件
@@ -98,6 +112,8 @@ deploy/
 ## 数据持久化
 
 项目使用 Docker 卷进行数据持久化，主要存储在 `./data` 目录中。
+
+如果使用本地 SQLite 数据库，数据文件 `dev.db` 将存储在此卷中。如果配置了外部数据库（Neon 或 Turso），此卷仍可用于存储其他应用数据。
 
 ## 故障排查
 

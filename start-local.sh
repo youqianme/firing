@@ -21,4 +21,6 @@ fi
 
 # 2. 启动服务
 echo "正在启动 Web 服务..."
-npm run dev:web
+echo "注意：在远程服务器上运行时，请确保使用 '0.0.0.0' 作为主机地址，以便外部访问。"
+# 设置 HOST 环境变量为 0.0.0.0，使 Next.js 监听所有网络接口
+HOST=0.0.0.0 npm run dev:web
