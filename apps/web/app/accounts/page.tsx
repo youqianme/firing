@@ -194,7 +194,7 @@ export default function AccountsPage() {
                   value={formData.name}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
 
@@ -207,7 +207,7 @@ export default function AccountsPage() {
                   name="type"
                   value={formData.type}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="broker">券商</option>
                   <option value="bank">银行卡</option>
@@ -225,7 +225,7 @@ export default function AccountsPage() {
                   name="currency"
                   value={formData.currency}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="CNY">人民币 (CNY)</option>
                   <option value="USD">美元 (USD)</option>
@@ -245,7 +245,7 @@ export default function AccountsPage() {
                   value={formData.notes}
                   onChange={handleInputChange}
                   rows={3}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 ></textarea>
               </div>
             </div>

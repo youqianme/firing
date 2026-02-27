@@ -321,7 +321,7 @@ export default function TransactionsPage() {
                     value={formData.fromAssetId}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">请选择</option>
                     {getCashAssets().map((asset) => (
@@ -341,7 +341,7 @@ export default function TransactionsPage() {
                     value={formData.toAssetId}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">请选择</option>
                     {getCashAssets().filter(a => a.id !== formData.fromAssetId).map((asset) => (
@@ -364,7 +364,7 @@ export default function TransactionsPage() {
                     min="0"
                     step="0.01"
                     required
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                   {formData.fromAssetId && (
                     <div className="text-sm text-slate-500 mt-1">
@@ -383,7 +383,7 @@ export default function TransactionsPage() {
                     value={formData.date}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -398,7 +398,7 @@ export default function TransactionsPage() {
                   value={formData.notes}
                   onChange={handleInputChange}
                   rows={3}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 ></textarea>
               </div>
 
@@ -427,7 +427,7 @@ export default function TransactionsPage() {
                     value={formData.fromAssetId}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">请选择</option>
                     {getTimeDepositAssets().map((asset) => (
@@ -447,7 +447,7 @@ export default function TransactionsPage() {
                     value={formData.toAssetId}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">请选择</option>
                     {getCashAssets().map((asset) => (
@@ -468,7 +468,7 @@ export default function TransactionsPage() {
                     value={formData.date}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -483,7 +483,7 @@ export default function TransactionsPage() {
                   value={formData.notes}
                   onChange={handleInputChange}
                   rows={3}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 ></textarea>
               </div>
 
@@ -500,8 +500,8 @@ export default function TransactionsPage() {
           )}
         </div>
 
-        {/* 交易列表 */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        {/* 交易列表 - 桌面端表格 */}
+        <div className="hidden md:block bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-slate-50">
@@ -544,21 +544,21 @@ export default function TransactionsPage() {
                     <td className="px-6 py-4">
                       <div className="space-y-2">
                         {transaction.fromAssetId && (
-                          <div className="flex justify-between">
+                          <div className="flex justify-between gap-4">
                             <div className="text-sm text-slate-500">
                               {getAssetName(transaction.fromAssetId)}
                             </div>
-                            <div className="text-sm text-red-600">
+                            <div className="text-sm text-red-600 font-medium">
                               -{formatCurrency(transaction.amount, transaction.currency)}
                             </div>
                           </div>
                         )}
                         {transaction.toAssetId && (
-                          <div className="flex justify-between">
+                          <div className="flex justify-between gap-4">
                             <div className="text-sm text-slate-500">
                               {getAssetName(transaction.toAssetId)}
                             </div>
-                            <div className="text-sm text-green-600">
+                            <div className="text-sm text-green-600 font-medium">
                               +{formatCurrency(transaction.amount, transaction.currency)}
                             </div>
                           </div>
@@ -578,18 +578,70 @@ export default function TransactionsPage() {
               </tbody>
             </table>
           </div>
-
-          {/* 空状态 */}
-          {transactions.length === 0 && (
-            <div className="text-center py-16">
-              <div className="text-6xl mb-4">💳</div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">暂无交易记录</h3>
-              <p className="text-slate-500 mb-6">
-                开始记录您的转账和定期兑付交易
-              </p>
-            </div>
-          )}
         </div>
+
+        {/* 交易列表 - 移动端卡片视图 */}
+        <div className="md:hidden space-y-4">
+          {transactions.map((transaction) => (
+            <div key={transaction.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <div className="text-sm text-slate-500">{formatDate(transaction.date)}</div>
+                  <span className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium ${transaction.type === TransactionType.TRANSFER ? 'bg-blue-50 text-blue-700' : 'bg-green-50 text-green-700'}`}>
+                    {transaction.type === TransactionType.TRANSFER ? '转账' : '定期兑付'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => handleDelete(transaction)}
+                  className="text-red-600 text-sm font-medium px-2 py-1 bg-red-50 rounded"
+                >
+                  删除
+                </button>
+              </div>
+
+              <div className="bg-slate-50 p-3 rounded-lg space-y-2 mb-3">
+                {transaction.fromAssetId && (
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-600">{getAssetName(transaction.fromAssetId)}</span>
+                    <span className="text-red-600 font-medium">
+                      -{formatCurrency(transaction.amount, transaction.currency)}
+                    </span>
+                  </div>
+                )}
+                {transaction.fromAssetId && transaction.toAssetId && (
+                  <div className="flex justify-center -my-1">
+                    <span className="text-slate-400 text-xs">↓</span>
+                  </div>
+                )}
+                {transaction.toAssetId && (
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-600">{getAssetName(transaction.toAssetId)}</span>
+                    <span className="text-green-600 font-medium">
+                      +{formatCurrency(transaction.amount, transaction.currency)}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {transaction.notes && (
+                <div className="text-sm text-slate-500 bg-white border border-slate-100 p-2 rounded">
+                  备注: {transaction.notes}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* 空状态 */}
+        {transactions.length === 0 && (
+          <div className="text-center py-16 bg-white rounded-xl border border-slate-200 shadow-sm mt-4">
+            <div className="text-6xl mb-4">💳</div>
+            <h3 className="text-xl font-semibold text-slate-900 mb-2">暂无交易记录</h3>
+            <p className="text-slate-500 mb-6">
+              开始记录您的转账和定期兑付交易
+            </p>
+          </div>
+        )}
       </main>
     </div>
   );

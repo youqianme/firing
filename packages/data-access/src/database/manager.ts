@@ -32,7 +32,12 @@ export class DatabaseManager {
       return;
     }
 
-    try {
+    if (this.initializationPromise) {
+      return this.initializationPromise;
+    }
+
+    this.initializationPromise = (async () => {
+      try {
       await this.adapter.beginTransaction();
 
       // 创建资产表
@@ -192,7 +197,12 @@ export class DatabaseManager {
     } catch (error) {
       await this.adapter.rollback();
       throw error;
+    } finally {
+      this.initializationPromise = null;
     }
+    })();
+
+    return this.initializationPromise;
   }
 
   /**

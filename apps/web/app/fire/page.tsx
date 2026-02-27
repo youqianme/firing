@@ -227,7 +227,7 @@ export default function FirePage() {
                     min="0"
                     step="1000"
                     required
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
                 <div>
@@ -243,7 +243,7 @@ export default function FirePage() {
                     max="20"
                     step="0.1"
                     required
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                   <div className="text-sm text-slate-500 mt-1">
                     默认值: 4%

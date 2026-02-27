@@ -334,7 +334,7 @@ export default function LiabilitiesPage() {
                     value={formData.name}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
@@ -346,7 +346,7 @@ export default function LiabilitiesPage() {
                     name="currency"
                     value={formData.currency}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     {Object.values(Currency).map((currency) => (
                       <option key={currency} value={currency}>
@@ -369,7 +369,7 @@ export default function LiabilitiesPage() {
                     min="0"
                     step="0.01"
                     required
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
@@ -384,7 +384,7 @@ export default function LiabilitiesPage() {
                     onChange={handleInputChange}
                     min="0"
                     step="0.01"
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
@@ -397,7 +397,7 @@ export default function LiabilitiesPage() {
                     name="startDate"
                     value={formData.startDate}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
@@ -410,7 +410,7 @@ export default function LiabilitiesPage() {
                     name="endDate"
                     value={formData.endDate}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -425,7 +425,7 @@ export default function LiabilitiesPage() {
                   value={formData.notes}
                   onChange={handleInputChange}
                   rows={3}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 ></textarea>
               </div>
 
@@ -474,7 +474,7 @@ export default function LiabilitiesPage() {
                     min="0"
                     step="0.01"
                     required
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                   <div className="text-sm text-slate-500 mt-1">
                     当前余额: {formatCurrency(selectedLiability.balance, selectedLiability.currency)}
@@ -491,7 +491,7 @@ export default function LiabilitiesPage() {
                     value={paymentFormData.date}
                     onChange={handlePaymentInputChange}
                     required
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -506,7 +506,7 @@ export default function LiabilitiesPage() {
                   value={paymentFormData.notes}
                   onChange={handlePaymentInputChange}
                   rows={3}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 ></textarea>
               </div>
 
@@ -534,8 +534,8 @@ export default function LiabilitiesPage() {
           </div>
         )}
 
-        {/* 负债列表 */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        {/* 负债列表 - 桌面端表格 */}
+        <div className="hidden md:block bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-slate-50">
@@ -633,24 +633,94 @@ export default function LiabilitiesPage() {
               </tbody>
             </table>
           </div>
-
-          {/* 空状态 */}
-          {liabilities.length === 0 && (
-            <div className="text-center py-16">
-              <div className="text-6xl mb-4">💳</div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">暂无负债</h3>
-              <p className="text-slate-500 mb-6">
-                点击上方「新增负债」按钮开始管理您的负债
-              </p>
-              <button
-                onClick={() => setIsAdding(true)}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-              >
-                新增负债
-              </button>
-            </div>
-          )}
         </div>
+
+        {/* 负债列表 - 移动端卡片视图 */}
+        <div className="md:hidden space-y-4">
+          {liabilities.map((liability) => {
+            const liabilityPayments = getLiabilityPayments(liability.id);
+            return (
+              <div key={liability.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <div className="font-bold text-slate-900 text-lg">{liability.name}</div>
+                    <span className="inline-block mt-1 px-2 py-0.5 bg-red-50 text-red-700 rounded text-xs font-medium">
+                      {liability.type === LiabilityType.CREDIT_CARD ? '信用卡' :
+                       liability.type === LiabilityType.MORTGAGE ? '房贷' :
+                       liability.type === LiabilityType.CAR_LOAN ? '车贷' :
+                       liability.type === LiabilityType.CONSUMER_LOAN ? '消费贷' : '其他借款'}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-red-600 text-lg">
+                      {formatCurrency(liability.balance, liability.currency)}
+                    </div>
+                    {liability.interestRate && (
+                      <div className="text-sm text-slate-500 mt-1">
+                        利率: {liability.interestRate}%
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 额外信息 */}
+                {(liability.endDate || liabilityPayments.length > 0) && (
+                  <div className="mb-3 text-sm space-y-1 bg-slate-50 p-2 rounded-lg">
+                    {liability.endDate && (
+                      <div className="text-slate-500">
+                        到期: {formatDate(liability.endDate)} ({getDaysUntilEnd(liability.endDate)}天)
+                      </div>
+                    )}
+                    {liabilityPayments.length > 0 && (
+                      <div className="text-slate-500">
+                        已还款: {liabilityPayments.length} 次
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 操作按钮 */}
+                <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100">
+                  <button
+                    onClick={() => handleRecordPayment(liability)}
+                    className="flex-1 py-2 text-green-600 font-medium bg-green-50 rounded-lg text-center active:bg-green-100"
+                  >
+                    还款
+                  </button>
+                  <button
+                    onClick={() => handleEdit(liability)}
+                    className="flex-1 py-2 text-blue-600 font-medium bg-blue-50 rounded-lg text-center active:bg-blue-100"
+                  >
+                    编辑
+                  </button>
+                  <button
+                    onClick={() => handleDelete(liability)}
+                    className="flex-1 py-2 text-red-600 font-medium bg-red-50 rounded-lg text-center active:bg-red-100"
+                  >
+                    删除
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* 空状态 */}
+        {liabilities.length === 0 && (
+          <div className="text-center py-16 bg-white rounded-xl border border-slate-200 shadow-sm mt-4">
+            <div className="text-6xl mb-4">💳</div>
+            <h3 className="text-xl font-semibold text-slate-900 mb-2">暂无负债</h3>
+            <p className="text-slate-500 mb-6">
+              点击上方「新增负债」按钮开始管理您的负债
+            </p>
+            <button
+              onClick={() => setIsAdding(true)}
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            >
+              新增负债
+            </button>
+          </div>
+        )}
 
         {/* 还款记录列表 */}
         {payments.length > 0 && (
