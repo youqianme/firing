@@ -1,5 +1,38 @@
 # 有钱么财务应用变更日志
 
+## [1.1.0] - 2026-02-27
+
+### 🚀 新特性
+
+- **FIRE 目标规划**
+  - 新增 FIRE (Financial Independence, Retire Early) 目标页面
+  - 支持配置年度支出和安全提取率 (SWR)
+  - 可视化展示 FIRE 进度、目标金额和当前资产缺口
+  - 支持筛选计入 FIRE 计算的资产
+
+### 🏗️ 基础设施
+
+- **多数据库支持**
+  - 新增 Neon (Serverless Postgres) 数据库支持，适配 Vercel 部署环境
+  - 新增 LibSQL/Turso 数据库支持
+  - 实现数据库适配器的动态切换，根据环境变量自动选择存储引擎 (SQLite/Postgres/LibSQL)
+
+### 🔧 优化与修复
+
+- **部署适配**
+  - 优化 Vercel 部署流程
+  - 修复每日收益计算问题
+
+### Commits
+
+- ccf861a deploy
+- 608f7a9 build web
+- 1714243 fire
+- 51e0f21 neon db
+- f17b6d3 vercel db
+- e1fece4 setup
+- 7f252c7 dev
+
 ## [1.0.3] - 2026-02-23
 
 ### ⚡️ 性能优化
@@ -161,6 +194,7 @@
   - 创建共享工具函数包
   - 创建共享数据访问层包
 
+[1.1.0]: #
 [1.0.3]: #
 [1.0.2]: #
 [1.0.1]: #
