@@ -4,8 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
+    "dev:web": "npm run dev",
     "build": "next build --webpack",
+    "build:web": "npm run build",
     "start": "next start",
+    "start:web": "npm run start",
     "lint": "next lint"
   },
   "dependencies": {

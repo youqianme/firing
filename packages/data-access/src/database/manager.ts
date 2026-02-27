@@ -7,6 +7,7 @@ export class DatabaseManager {
   private static instance: DatabaseManager;
   private adapter: DatabaseAdapter;
   private isInitialized: boolean = false;
+  private initializationPromise: Promise<void> | null = null;
 
   private constructor(adapter: DatabaseAdapter) {
     this.adapter = adapter;

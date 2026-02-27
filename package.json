@@ -8,11 +8,11 @@
     "config/*"
   ],
   "scripts": {
-    "dev:web": "cd apps/web && npm run dev",
-    "dev:mobile": "cd apps/mobile && npx expo start",
-    "build:web": "cd apps/web && npm run build",
-    "build:mobile": "cd apps/mobile && npx expo export --platform web",
-    "start:web": "cd apps/web && npm run start",
+    "dev:web": "npm run dev --workspace=firing-web",
+    "dev:mobile": "npm run start --workspace=firing-mobile",
+    "build:web": "npm run build --workspace=firing-web",
+    "build:mobile": "npm run export:web --workspace=firing-mobile",
+    "start:web": "npm run start --workspace=firing-web",
     "lint": "eslint apps/ packages/"
   },
   "devDependencies": {
