@@ -1,5 +1,5 @@
 import { DatabaseManager, DatabaseAdapter } from '@firing/data-access';
-import { WebDatabaseAdapter } from './database-adapter';
+// import { WebDatabaseAdapter } from './database-adapter'; // 移除静态导入，改为动态导入
 import { LibsqlDatabaseAdapter } from './libsql-adapter';
 import { NeonDatabaseAdapter } from './neon-adapter';
 import path from 'path';
@@ -36,6 +36,9 @@ if (!global.dbManager) {
     }
 
     console.log('Using local SQLite database adapter');
+    // 动态导入 WebDatabaseAdapter，避免在 Vercel 环境中加载 better-sqlite3
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { WebDatabaseAdapter } = require('./database-adapter');
     adapter = new WebDatabaseAdapter(DB_PATH);
   }
 

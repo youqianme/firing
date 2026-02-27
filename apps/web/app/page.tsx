@@ -4,12 +4,13 @@ import { useEffect, useState, useMemo } from 'react';
 import { Area, AreaChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { convertCurrency, formatCurrency, Currency } from '@firing/utils';
 import { formatDate } from '@firing/utils';
-import { Asset, Liability, Activity } from '@firing/types';
+import { Asset, Liability, Activity, FireConfig } from '@firing/types';
 
 export default function Home() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [liabilities, setLiabilities] = useState<Liability[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [fireConfig, setFireConfig] = useState<FireConfig | null>(null);
   const [totalAssets, setTotalAssets] = useState(0);
   const [totalLiabilities, setTotalLiabilities] = useState(0);
   const [netWorth, setNetWorth] = useState(0);
@@ -30,6 +31,15 @@ export default function Home() {
     return actionMap[action] || action;
   }
 
+  // 获取 FIRE 里程碑
+  function getFireMilestone(progress: number) {
+    if (progress >= 100) return { title: '财务自由', description: '恭喜！您已达成 FIRE 目标，享受自由人生！', color: 'text-green-600', bg: 'bg-green-100' };
+    if (progress >= 80) return { title: '最后冲刺', description: '胜利在望，财务自由近在咫尺！', color: 'text-blue-600', bg: 'bg-blue-100' };
+    if (progress >= 50) return { title: '半山腰', description: '已经完成一半了，继续保持！', color: 'text-indigo-600', bg: 'bg-indigo-100' };
+    if (progress >= 25) return { title: '稳步积累', description: '积少成多，复利效应开始显现。', color: 'text-purple-600', bg: 'bg-purple-100' };
+    return { title: '起步阶段', description: '千里之行，始于足下。', color: 'text-slate-600', bg: 'bg-slate-100' };
+  }
+
   // 加载数据
   useEffect(() => {
     const controller = new AbortController();
@@ -44,20 +54,23 @@ export default function Home() {
         setBaseCurrency(baseCurrency);
 
         // 获取资产和负债
-        const [assetsResponse, liabilitiesResponse, activitiesResponse] = await Promise.all([
+        const [assetsResponse, liabilitiesResponse, activitiesResponse, fireConfigResponse] = await Promise.all([
           fetch('/api/assets', { signal }),
           fetch('/api/liabilities', { signal }),
-          fetch('/api/activity', { signal })
+          fetch('/api/activity', { signal }),
+          fetch('/api/fire', { signal })
         ]);
 
         const loadedAssets = await assetsResponse.json();
         const loadedLiabilities = await liabilitiesResponse.json();
         const loadedActivities = await activitiesResponse.json();
+        const loadedFireConfig = await fireConfigResponse.json();
 
         if (!signal.aborted) {
           setAssets(loadedAssets);
           setLiabilities(loadedLiabilities);
           setActivities(loadedActivities);
+          setFireConfig(loadedFireConfig);
 
           // 计算核心指标
           calculateMetrics(loadedAssets, loadedLiabilities, baseCurrency);
@@ -135,6 +148,30 @@ export default function Home() {
     setMissingRates(Array.from(requiredRates));
   }
 
+  // 计算 FIRE 相关数据
+  const fireMetrics = useMemo(() => {
+    if (!fireConfig) return null;
+
+    const target = fireConfig.annualExpense / fireConfig.swr;
+    
+    let current = 0;
+    for (const asset of assets) {
+      if (asset.includeInFire) {
+        current += convertCurrency(asset.amount, asset.currency, baseCurrency);
+      }
+    }
+
+    const progress = target > 0 ? Math.min(100, (current / target) * 100) : 0;
+    const gap = target - current;
+
+    return {
+      target,
+      current,
+      progress,
+      gap
+    };
+  }, [assets, fireConfig, baseCurrency]);
+
   // 生成趋势图数据
   const trendData = useMemo(() => {
     // 这里简化处理，实际应该从数据库获取历史数据
@@ -211,6 +248,77 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* FIRE 进度卡片 */}
+        {fireMetrics && (
+          <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-8 overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-100 to-transparent rounded-bl-full opacity-50 -mr-8 -mt-8"></div>
+            
+            <div className="relative z-10">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-slate-900 flex items-center">
+                  <span className="mr-2 text-2xl">🔥</span>
+                  FIRE 进度
+                </h2>
+                <div className="text-sm font-medium px-3 py-1 bg-slate-100 rounded-full text-slate-600">
+                  目标: {formatCurrency(fireMetrics.target, baseCurrency)}
+                </div>
+              </div>
+              
+              <div className="mb-8">
+                <div className="flex justify-between items-end mb-2">
+                  <div className="flex items-center space-x-2">
+                    <span className={`px-2 py-1 rounded text-xs font-semibold ${getFireMilestone(fireMetrics.progress).bg} ${getFireMilestone(fireMetrics.progress).color}`}>
+                      {getFireMilestone(fireMetrics.progress).title}
+                    </span>
+                    <span className="text-sm text-slate-500">
+                      {getFireMilestone(fireMetrics.progress).description}
+                    </span>
+                  </div>
+                  <div className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">
+                    {fireMetrics.progress.toFixed(1)}%
+                  </div>
+                </div>
+                
+                <div className="h-4 bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                  <div 
+                    className="h-full bg-gradient-to-r from-orange-400 via-red-500 to-pink-500 transition-all duration-1000 ease-out relative"
+                    style={{ width: `${fireMetrics.progress}%` }}
+                  >
+                    <div className="absolute top-0 right-0 bottom-0 w-1 bg-white/30 animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-slate-200 transition-colors">
+                  <div className="text-xs font-medium text-slate-500 mb-1 uppercase tracking-wider">当前 FIRE 资产</div>
+                  <div className="font-bold text-slate-900 text-lg">
+                    {formatCurrency(fireMetrics.current, baseCurrency)}
+                  </div>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-slate-200 transition-colors">
+                  <div className="text-xs font-medium text-slate-500 mb-1 uppercase tracking-wider">年度支出</div>
+                  <div className="font-bold text-slate-900 text-lg">
+                    {formatCurrency(fireConfig?.annualExpense || 0, baseCurrency)}
+                  </div>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-slate-200 transition-colors">
+                  <div className="text-xs font-medium text-slate-500 mb-1 uppercase tracking-wider">安全提取率</div>
+                  <div className="font-bold text-slate-900 text-lg">
+                    {((fireConfig?.swr || 0.04) * 100).toFixed(1)}%
+                  </div>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-slate-200 transition-colors">
+                  <div className="text-xs font-medium text-slate-500 mb-1 uppercase tracking-wider">距离目标</div>
+                  <div className={`font-bold text-lg ${fireMetrics.gap > 0 ? 'text-slate-900' : 'text-green-600'}`}>
+                    {fireMetrics.gap > 0 ? formatCurrency(fireMetrics.gap, baseCurrency) : '已达成'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 净资产趋势图 */}
         <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm mb-8">

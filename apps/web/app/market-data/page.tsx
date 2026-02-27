@@ -105,7 +105,7 @@ export default function MarketDataPage() {
                   onChange={handleInputChange}
                   min="0"
                   step="0.01"
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               ) : (
                 <div className="text-lg font-medium text-slate-900">
@@ -128,7 +128,7 @@ export default function MarketDataPage() {
                   onChange={handleInputChange}
                   min="0"
                   step="0.01"
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               ) : (
                 <div className="text-lg font-medium text-slate-900">
@@ -151,7 +151,7 @@ export default function MarketDataPage() {
                   onChange={handleInputChange}
                   min="0"
                   step="0.1"
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               ) : (
                 <div className="text-lg font-medium text-slate-900">

@@ -108,7 +108,7 @@ export default function RootLayout({
             </div>
             
             {/* 主内容 */}
-            <div className="container mx-auto px-4 py-6">
+            <div className="container mx-auto px-4 pt-6 pb-24 md:pb-6">
               {children}
             </div>
             

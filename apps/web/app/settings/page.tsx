@@ -268,7 +268,7 @@ export default function SettingsPage() {
                 <select
                   value={settings.baseCurrency}
                   onChange={(e) => setSettings({ ...settings, baseCurrency: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="CNY">人民币 (CNY)</option>
                   <option value="USD">美元 (USD)</option>
@@ -348,7 +348,7 @@ export default function SettingsPage() {
                   type="file"
                   accept=".json"
                   onChange={handleImportData}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg"
+                  className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg"
                 />
                 <button
                   onClick={() => (document.querySelector('input[type="file"]') as HTMLElement | null)?.click()}

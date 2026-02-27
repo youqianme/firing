@@ -7,6 +7,7 @@ export class DatabaseManager {
   private static instance: DatabaseManager;
   private adapter: DatabaseAdapter;
   private isInitialized: boolean = false;
+  private initializationPromise: Promise<void> | null = null;
 
   private constructor(adapter: DatabaseAdapter) {
     this.adapter = adapter;
@@ -32,7 +33,12 @@ export class DatabaseManager {
       return;
     }
 
-    try {
+    if (this.initializationPromise) {
+      return this.initializationPromise;
+    }
+
+    this.initializationPromise = (async () => {
+      try {
       await this.adapter.beginTransaction();
 
       // 创建资产表
@@ -42,12 +48,12 @@ export class DatabaseManager {
           name TEXT NOT NULL,
           type TEXT NOT NULL,
           currency TEXT NOT NULL,
-          amount REAL NOT NULL,
+          amount DOUBLE PRECISION NOT NULL,
           includeInFire INTEGER NOT NULL DEFAULT 1,
           accountId TEXT,
-          quantity REAL,
-          unitPrice REAL,
-          interestRate REAL,
+          quantity DOUBLE PRECISION,
+          unitPrice DOUBLE PRECISION,
+          interestRate DOUBLE PRECISION,
           startDate TEXT,
           endDate TEXT,
           valuationMethod TEXT NOT NULL DEFAULT 'cost',
@@ -64,8 +70,8 @@ export class DatabaseManager {
           name TEXT NOT NULL,
           type TEXT NOT NULL,
           currency TEXT NOT NULL,
-          balance REAL NOT NULL,
-          interestRate REAL,
+          balance DOUBLE PRECISION NOT NULL,
+          interestRate DOUBLE PRECISION,
           startDate TEXT,
           endDate TEXT,
           updatedAt TEXT NOT NULL,
@@ -79,7 +85,7 @@ export class DatabaseManager {
         CREATE TABLE IF NOT EXISTS payments (
           id TEXT PRIMARY KEY,
           liabilityId TEXT NOT NULL,
-          amount REAL NOT NULL,
+          amount DOUBLE PRECISION NOT NULL,
           date TEXT NOT NULL,
           notes TEXT,
           createdAt TEXT NOT NULL,
@@ -94,9 +100,9 @@ export class DatabaseManager {
           type TEXT NOT NULL,
           fromAssetId TEXT,
           toAssetId TEXT,
-          amount REAL NOT NULL,
+          amount DOUBLE PRECISION NOT NULL,
           currency TEXT NOT NULL,
-          fee REAL,
+          fee DOUBLE PRECISION,
           date TEXT NOT NULL,
           notes TEXT,
           createdAt TEXT NOT NULL,
@@ -122,7 +128,7 @@ export class DatabaseManager {
         CREATE TABLE IF NOT EXISTS marketData (
           id TEXT PRIMARY KEY,
           symbol TEXT NOT NULL UNIQUE,
-          price REAL NOT NULL,
+          price DOUBLE PRECISION NOT NULL,
           updatedAt TEXT NOT NULL,
           source TEXT NOT NULL
         )
@@ -136,10 +142,10 @@ export class DatabaseManager {
           objectType TEXT NOT NULL,
           objectId TEXT NOT NULL,
           objectName TEXT NOT NULL,
-          amount REAL NOT NULL,
+          amount DOUBLE PRECISION NOT NULL,
           currency TEXT NOT NULL,
-          oldAmount REAL,
-          delta REAL,
+          oldAmount DOUBLE PRECISION,
+          delta DOUBLE PRECISION,
           notes TEXT,
           createdAt TEXT NOT NULL
         )
@@ -149,8 +155,8 @@ export class DatabaseManager {
       await this.adapter.run(`
         CREATE TABLE IF NOT EXISTS fireConfig (
           id TEXT PRIMARY KEY,
-          annualExpense REAL NOT NULL DEFAULT 0,
-          swr REAL NOT NULL DEFAULT 4,
+          annualExpense DOUBLE PRECISION NOT NULL DEFAULT 0,
+          swr DOUBLE PRECISION NOT NULL DEFAULT 4,
           updatedAt TEXT NOT NULL,
           createdAt TEXT NOT NULL
         )
@@ -169,7 +175,7 @@ export class DatabaseManager {
 
       // 检查并插入默认FIRE配置
       const fireConfigCount = await this.adapter.get('SELECT COUNT(*) as count FROM fireConfig');
-      if (fireConfigCount && fireConfigCount.count === 0) {
+      if (fireConfigCount && Number(fireConfigCount.count) === 0) {
         const now = new Date().toISOString();
         await this.adapter.run(
           'INSERT INTO fireConfig (id, annualExpense, swr, updatedAt, createdAt) VALUES (?, ?, ?, ?, ?)',
@@ -179,7 +185,7 @@ export class DatabaseManager {
 
       // 检查并插入默认用户设置
       const settingsCount = await this.adapter.get('SELECT COUNT(*) as count FROM userSettings');
-      if (settingsCount && settingsCount.count === 0) {
+      if (settingsCount && Number(settingsCount.count) === 0) {
         const now = new Date().toISOString();
         await this.adapter.run(
           'INSERT INTO userSettings (id, baseCurrency, privacyMode, updatedAt, createdAt) VALUES (?, ?, ?, ?, ?)',
@@ -192,7 +198,12 @@ export class DatabaseManager {
     } catch (error) {
       await this.adapter.rollback();
       throw error;
+    } finally {
+      this.initializationPromise = null;
     }
+    })();
+
+    return this.initializationPromise;
   }
 
   /**

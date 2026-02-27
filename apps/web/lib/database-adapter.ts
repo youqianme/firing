@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import type Database from 'better-sqlite3';
 import { DatabaseAdapter } from '@firing/data-access';
 
 /**
@@ -9,7 +9,11 @@ export class WebDatabaseAdapter implements DatabaseAdapter {
   private inTransaction: boolean = false;
 
   constructor(dbPath: string) {
-    this.db = new Database(dbPath, {
+    // 动态导入 better-sqlite3，避免在 Serverless 环境中被构建
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const DatabaseConstructor = require('better-sqlite3');
+    
+    this.db = new DatabaseConstructor(dbPath, {
       fileMustExist: false,
       timeout: 5000,
       verbose: null // 禁用冗余日志

@@ -17,9 +17,14 @@ check_command() {
     fi
 }
 
+# 函数：获取 Node.js 主版本号
+get_node_major_version() {
+    node -v | cut -d'v' -f2 | cut -d'.' -f1
+}
+
 # 函数：安装 Node.js
 install_node() {
-    echo "未检测到 Node.js，正在尝试安装..."
+    echo "正在尝试安装或更新 Node.js..."
     
     OS="$(uname -s)"
     case "${OS}" in
@@ -32,34 +37,56 @@ install_node() {
 
     if [ "$machine" = "Mac" ]; then
         if check_command brew; then
-            echo "检测到 Homebrew，正在使用 brew 安装 Node.js..."
-            brew install node
+            echo "检测到 Homebrew，正在使用 brew 安装/升级 Node.js..."
+            brew upgrade node || brew install node
         else
             echo "错误：未检测到 Homebrew。请手动安装 Node.js (https://nodejs.org/) 或先安装 Homebrew (https://brew.sh/)."
             exit 1
         fi
     elif [ "$machine" = "Linux" ]; then
+        echo "检测到 Linux 系统，准备安装/更新 Node.js (目标版本: 最新 LTS)..."
+        
+        # 检查是否已有 curl，如果没有则安装
+        if ! check_command curl; then
+            echo "正在安装 curl..."
+            if check_command apt-get; then
+                if [ "$(id -u)" -ne 0 ]; then sudo apt-get update && sudo apt-get install -y curl; else apt-get update && apt-get install -y curl; fi
+            elif check_command yum; then
+                if [ "$(id -u)" -ne 0 ]; then sudo yum install -y curl; else yum install -y curl; fi
+            fi
+        fi
+
         if check_command apt-get; then
-            echo "检测到 apt-get，正在安装 Node.js..."
-            # 尝试安装 nodejs 和 npm
+            echo "使用 apt-get 安装..."
+            
+            # 清理可能冲突的旧包
+            echo "正在清理可能冲突的旧版本包 (libnode-dev, nodejs)..."
             if [ "$(id -u)" -ne 0 ]; then
-                echo "请输入密码以使用 sudo 安装 Node.js"
-                sudo apt-get update
-                sudo apt-get install -y nodejs npm
+                sudo apt-get remove -y libnode-dev libnode72 nodejs npm || true
+                sudo apt-get autoremove -y || true
             else
-                apt-get update
-                apt-get install -y nodejs npm
+                apt-get remove -y libnode-dev libnode72 nodejs npm || true
+                apt-get autoremove -y || true
+            fi
+
+            if [ "$(id -u)" -ne 0 ]; then
+                curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+                sudo apt-get install -y nodejs
+            else
+                curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
+                apt-get install -y nodejs
             fi
         elif check_command yum; then
-            echo "检测到 yum，正在安装 Node.js..."
+            echo "使用 yum 安装..."
             if [ "$(id -u)" -ne 0 ]; then
-                echo "请输入密码以使用 sudo 安装 Node.js"
-                sudo yum install -y nodejs npm
+                curl -fsSL https://rpm.nodesource.com/setup_lts.x | sudo bash -
+                sudo yum install -y nodejs
             else
-                yum install -y nodejs npm
+                curl -fsSL https://rpm.nodesource.com/setup_lts.x | bash -
+                yum install -y nodejs
             fi
         else
-             echo "错误：未检测到支持的包管理器。请手动安装 Node.js (https://nodejs.org/)."
+             echo "错误：未检测到支持的包管理器。请手动安装 Node.js LTS (https://nodejs.org/)."
              exit 1
         fi
     else
@@ -68,11 +95,17 @@ install_node() {
     fi
 }
 
-# 检查 Node.js 是否已安装
+# 检查 Node.js 是否已安装且版本符合要求
 if ! check_command node; then
     install_node
 else
-    echo "检测到 Node.js 已安装。"
+    current_ver=$(get_node_major_version)
+    if [ "$current_ver" -lt 18 ]; then
+        echo "检测到当前 Node.js 版本 (v$current_ver) 过低，需要 v18+。"
+        install_node
+    else
+        echo "检测到 Node.js (v$current_ver) 已安装且版本符合要求。"
+    fi
 fi
 
 # 再次检查 Node.js 和 npm 版本

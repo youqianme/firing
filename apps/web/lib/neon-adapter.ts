@@ -104,7 +104,9 @@ export class NeonDatabaseAdapter implements DatabaseAdapter {
       try {
         await this.client.query('COMMIT');
       } finally {
-        this.client.release();
+        if (this.client) {
+          this.client.release();
+        }
         this.client = null;
         this.inTransaction = false;
       }
@@ -119,7 +121,9 @@ export class NeonDatabaseAdapter implements DatabaseAdapter {
       try {
         await this.client.query('ROLLBACK');
       } finally {
-        this.client.release();
+        if (this.client) {
+          this.client.release();
+        }
         this.client = null;
         this.inTransaction = false;
       }

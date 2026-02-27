@@ -400,7 +400,7 @@ export default function AssetsPage() {
                     value={formData.name}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
@@ -412,7 +412,7 @@ export default function AssetsPage() {
                     name="currency"
                     value={formData.currency}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="CNY">人民币 (CNY)</option>
                     <option value="USD">美元 (USD)</option>
@@ -434,7 +434,7 @@ export default function AssetsPage() {
                     min="0"
                     step="0.01"
                     required
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
@@ -446,7 +446,7 @@ export default function AssetsPage() {
                     name="accountId"
                     value={formData.accountId}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">未指定</option>
                     {accounts.map((account) => (
@@ -472,7 +472,7 @@ export default function AssetsPage() {
                       onChange={handleInputChange}
                       min="0"
                       step="0.01"
-                      className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
 
@@ -485,7 +485,7 @@ export default function AssetsPage() {
                       name="startDate"
                       value={formData.startDate}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
 
@@ -498,7 +498,7 @@ export default function AssetsPage() {
                       name="endDate"
                       value={formData.endDate}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
                 </div>
@@ -528,7 +528,7 @@ export default function AssetsPage() {
                   value={formData.notes}
                   onChange={handleInputChange}
                   rows={3}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 text-base md:text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 ></textarea>
               </div>
 
@@ -556,8 +556,8 @@ export default function AssetsPage() {
           </div>
         )}
 
-        {/* 资产列表 */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        {/* 资产列表 - 桌面端表格 */}
+        <div className="hidden md:block bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-slate-50">
@@ -643,27 +643,88 @@ export default function AssetsPage() {
               </tbody>
             </table>
           </div>
-
-          {/* 空状态 */}
-          {assets.length === 0 && (
-            <div className="text-center py-16">
-              <div className="text-6xl mb-4">💼</div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">暂无资产</h3>
-              <p className="text-slate-500 mb-6">
-                点击上方「新增资产」按钮开始管理您的资产
-              </p>
-              <button
-                onClick={() => {
-                  // 直接设置isAdding为true
-                  setIsAdding(true);
-                }}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-              >
-                新增资产
-              </button>
-            </div>
-          )}
         </div>
+
+        {/* 资产列表 - 移动端卡片视图 */}
+        <div className="md:hidden space-y-4">
+          {filteredAssets.map((asset) => (
+            <div key={asset.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <div className="font-bold text-slate-900 text-lg">{asset.name}</div>
+                  <div className="text-sm text-slate-500 mt-1">{getAccountName(asset.accountId)}</div>
+                </div>
+                <div className="text-right">
+                  <div className="font-bold text-slate-900 text-lg">
+                    {formatCurrency(asset.amount, asset.currency)}
+                  </div>
+                  <span className="inline-block mt-1 px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs font-medium">
+                    {asset.type === 'cash' ? '现金' :
+                     asset.type === 'bank' || asset.type === 'time_deposit' ? '定期' :
+                     asset.type === 'investment' || asset.type === 'commodity' ? 
+                       (asset.subType === 'stock' ? '股票' :
+                        asset.subType === 'fund' ? '基金' :
+                        asset.subType === 'gold' ? '黄金' : '投资') :
+                     asset.type === 'real_estate' ? '房产' :
+                     asset.type === 'other' ? '其他' : asset.type}
+                  </span>
+                </div>
+              </div>
+              
+              {/* 额外信息 */}
+              {(asset.includeInFire || (asset.type === 'bank' && asset.endDate)) && (
+                <div className="mb-3 text-sm space-y-1 bg-slate-50 p-2 rounded-lg">
+                  {asset.includeInFire && (
+                    <div className="text-green-600 flex items-center">
+                      <span className="mr-1">🔥</span> 计入 FIRE
+                    </div>
+                  )}
+                  {asset.type === 'bank' && asset.endDate && (
+                    <div className="text-slate-500">
+                      到期: {formatDate(asset.endDate)} ({getDaysUntilMaturity(asset.endDate)}天)
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 操作按钮 */}
+              <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100">
+                <button
+                  onClick={() => handleEdit(asset)}
+                  className="flex-1 py-2 text-blue-600 font-medium bg-blue-50 rounded-lg text-center active:bg-blue-100"
+                >
+                  编辑
+                </button>
+                <button
+                  onClick={() => handleDelete(asset)}
+                  className="flex-1 py-2 text-red-600 font-medium bg-red-50 rounded-lg text-center active:bg-red-100"
+                >
+                  删除
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* 空状态 */}
+        {assets.length === 0 && (
+          <div className="text-center py-16 bg-white rounded-xl border border-slate-200 shadow-sm mt-4">
+            <div className="text-6xl mb-4">💼</div>
+            <h3 className="text-xl font-semibold text-slate-900 mb-2">暂无资产</h3>
+            <p className="text-slate-500 mb-6">
+              点击上方「新增资产」按钮开始管理您的资产
+            </p>
+            <button
+              onClick={() => {
+                // 直接设置isAdding为true
+                setIsAdding(true);
+              }}
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            >
+              新增资产
+            </button>
+          </div>
+        )}
       </main>
     </div>
   );

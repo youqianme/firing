@@ -243,6 +243,23 @@ npm run build:mobile
 1. 安装依赖：`npm install`
 2. 启动服务：`npm run dev:web` (Web) 或 `npm run dev:mobile` (Mobile)
 
+### Vercel 部署
+
+本项目支持部署到 Vercel。
+
+1.  在 Vercel 控制台导入项目。
+2.  Framework Preset 选择 Next.js。
+3.  Root Directory 保持默认或根据提示选择（Vercel 通常能自动识别 Monorepo 中的 `apps/web`）。
+4.  配置环境变量：
+    *   **选项 A (推荐): 使用 Vercel Postgres (Neon)**
+        *   在 Vercel 项目设置中，添加 Storage -> Postgres。
+        *   Vercel 会自动设置 `POSTGRES_URL` 等环境变量，无需手动配置。
+    *   **选项 B: 使用 Turso (LibSQL)**
+        *   `TURSO_DATABASE_URL`: LibSQL/Turso 数据库连接 URL (例如: `libsql://your-db.turso.io`)
+        *   `TURSO_AUTH_TOKEN`: LibSQL/Turso 认证 Token
+    *   **注意**：如果不配置上述变量，将默认使用本地 SQLite 文件数据库。在 Vercel 等 Serverless 环境中，本地文件是临时的，重新部署后数据会丢失。强烈建议配置 Neon 或 Turso 以实现数据持久化。
+5.  点击 Deploy。
+
 ### Docker 部署
 
 #### 使用部署脚本（推荐）

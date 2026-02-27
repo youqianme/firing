@@ -22,7 +22,13 @@ export async function POST() {
       
       for (const account of accounts) {
         await adapter.run(
-          `INSERT OR REPLACE INTO accounts (id, name, type, currency, createdAt, notes) VALUES (?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO accounts (id, name, type, currency, createdAt, notes) VALUES (?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+           name=excluded.name,
+           type=excluded.type,
+           currency=excluded.currency,
+           createdAt=excluded.createdAt,
+           notes=excluded.notes`,
           [account.id, account.name, account.type, 'CNY', new Date().toISOString(), null]
         );
       }
@@ -36,7 +42,12 @@ export async function POST() {
       
       for (const data of marketData) {
         await adapter.run(
-          `INSERT OR REPLACE INTO marketData (id, symbol, price, updatedAt, source) VALUES (?, ?, ?, ?, ?)`,
+          `INSERT INTO marketData (id, symbol, price, updatedAt, source) VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+           symbol=excluded.symbol,
+           price=excluded.price,
+           updatedAt=excluded.updatedAt,
+           source=excluded.source`,
           [data.id, data.symbol, data.price, data.updatedAt, data.source]
         );
       }
@@ -53,7 +64,23 @@ export async function POST() {
       
       for (const asset of assets) {
         await adapter.run(
-          `INSERT OR REPLACE INTO assets (id, name, type, currency, amount, includeInFire, accountId, quantity, unitPrice, interestRate, startDate, endDate, valuationMethod, updatedAt, createdAt, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO assets (id, name, type, currency, amount, includeInFire, accountId, quantity, unitPrice, interestRate, startDate, endDate, valuationMethod, updatedAt, createdAt, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+           name=excluded.name,
+           type=excluded.type,
+           currency=excluded.currency,
+           amount=excluded.amount,
+           includeInFire=excluded.includeInFire,
+           accountId=excluded.accountId,
+           quantity=excluded.quantity,
+           unitPrice=excluded.unitPrice,
+           interestRate=excluded.interestRate,
+           startDate=excluded.startDate,
+           endDate=excluded.endDate,
+           valuationMethod=excluded.valuationMethod,
+           updatedAt=excluded.updatedAt,
+           createdAt=excluded.createdAt,
+           notes=excluded.notes`,
           [asset.id, asset.name, asset.type, asset.currency, asset.amount, asset.includeInFire, asset.accountId, null, null, asset.interestRate || null, asset.startDate || null, asset.endDate || null, asset.valuationMethod, asset.updatedAt, asset.createdAt, null]
         );
       }
@@ -66,7 +93,18 @@ export async function POST() {
       
       for (const liability of liabilities) {
         await adapter.run(
-          `INSERT OR REPLACE INTO liabilities (id, name, type, currency, balance, interestRate, startDate, endDate, updatedAt, createdAt, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO liabilities (id, name, type, currency, balance, interestRate, startDate, endDate, updatedAt, createdAt, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+           name=excluded.name,
+           type=excluded.type,
+           currency=excluded.currency,
+           balance=excluded.balance,
+           interestRate=excluded.interestRate,
+           startDate=excluded.startDate,
+           endDate=excluded.endDate,
+           updatedAt=excluded.updatedAt,
+           createdAt=excluded.createdAt,
+           notes=excluded.notes`,
           [liability.id, liability.name, liability.type, liability.currency, liability.balance, liability.interestRate, liability.startDate, liability.endDate, liability.updatedAt, liability.createdAt, null]
         );
       }
@@ -107,18 +145,44 @@ export async function POST() {
       
       for (const transaction of transactions) {
         await adapter.run(
-          `INSERT OR REPLACE INTO transactions (id, type, fromAssetId, toAssetId, amount, currency, fee, date, notes, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO transactions (id, type, fromAssetId, toAssetId, amount, currency, fee, date, notes, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+           type=excluded.type,
+           fromAssetId=excluded.fromAssetId,
+           toAssetId=excluded.toAssetId,
+           amount=excluded.amount,
+           currency=excluded.currency,
+           fee=excluded.fee,
+           date=excluded.date,
+           notes=excluded.notes,
+           createdAt=excluded.createdAt`,
           [transaction.id, transaction.type, transaction.fromAssetId, transaction.toAssetId, transaction.amount, transaction.currency, null, transaction.date, transaction.notes, new Date().toISOString()]
         );
       }
       
       // 6. 生成 FIRE 配置数据
       await adapter.run(
-        `INSERT OR REPLACE INTO fireConfig (id, annualExpense, swr, updatedAt, createdAt) VALUES (?, ?, ?, ?, ?)`,
+        `INSERT INTO fireConfig (id, annualExpense, swr, updatedAt, createdAt) VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+         annualExpense=excluded.annualExpense,
+         swr=excluded.swr,
+         updatedAt=excluded.updatedAt,
+         createdAt=excluded.createdAt`,
         ['default', 120000, 0.04, new Date().toISOString(), new Date().toISOString()]
       );
+
+      // 7. 生成用户设置数据
+      await adapter.run(
+        `INSERT INTO userSettings (id, baseCurrency, privacyMode, updatedAt, createdAt) VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+         baseCurrency=excluded.baseCurrency,
+         privacyMode=excluded.privacyMode,
+         updatedAt=excluded.updatedAt,
+         createdAt=excluded.createdAt`,
+        ['default', 'CNY', 0, new Date().toISOString(), new Date().toISOString()]
+      );
       
-      // 7. 生成活动记录
+      // 8. 生成活动记录
       const activities = [
         {
           id: 'act-1',
@@ -163,7 +227,18 @@ export async function POST() {
       
       for (const activity of activities) {
         await adapter.run(
-          `INSERT OR REPLACE INTO activities (id, action, objectType, objectId, objectName, amount, currency, oldAmount, delta, notes, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO activities (id, action, objectType, objectId, objectName, amount, currency, oldAmount, delta, notes, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+           action=excluded.action,
+           objectType=excluded.objectType,
+           objectId=excluded.objectId,
+           objectName=excluded.objectName,
+           amount=excluded.amount,
+           currency=excluded.currency,
+           oldAmount=excluded.oldAmount,
+           delta=excluded.delta,
+           notes=excluded.notes,
+           createdAt=excluded.createdAt`,
           [activity.id, activity.action, activity.objectType, activity.objectId, activity.objectName, activity.amount, activity.currency, activity.oldAmount, activity.delta, activity.notes, activity.createdAt]
         );
       }
