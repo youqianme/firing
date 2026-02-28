@@ -9,9 +9,10 @@ import {
 // 初始化数据库
 initializeDatabase();
 
-export async function GET() {
+export async function GET(request: Request) {
+  const userId = request.headers.get('x-user-id') || 'demo';
   try {
-    const transactions = await transactionRepository.getAll();
+    const transactions = await transactionRepository.getAll(userId);
     return new Response(JSON.stringify(transactions), {
       status: 200,
       headers: {
@@ -29,30 +30,31 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const userId = request.headers.get('x-user-id') || 'demo';
   try {
     const transactionData = await request.json();
     
     // 创建交易记录
-    const transaction = await transactionRepository.create(transactionData);
+    const transaction = await transactionRepository.create(userId, transactionData);
     
     if (transactionData.type === 'transfer') {
       // 处理转账交易
-      const fromAsset = await assetRepository.getById(transactionData.fromAssetId);
-      const toAsset = await assetRepository.getById(transactionData.toAssetId);
+      const fromAsset = await assetRepository.getById(userId, transactionData.fromAssetId);
+      const toAsset = await assetRepository.getById(userId, transactionData.toAssetId);
       
       if (fromAsset && toAsset) {
         // 更新资产余额
-        const updatedFromAsset = await assetRepository.update(transactionData.fromAssetId, {
+        const updatedFromAsset = await assetRepository.update(userId, transactionData.fromAssetId, {
           amount: fromAsset.amount - transactionData.amount
         });
         
-        const updatedToAsset = await assetRepository.update(transactionData.toAssetId, {
+        const updatedToAsset = await assetRepository.update(userId, transactionData.toAssetId, {
           amount: toAsset.amount + transactionData.amount
         });
         
         if (updatedFromAsset && updatedToAsset) {
           // 记录活动
-          await activityRepository.create({
+          await activityRepository.create(userId, {
             action: 'TRANSFER',
             objectType: 'TRANSACTION',
             objectId: transaction.id,
@@ -72,21 +74,21 @@ export async function POST(request: Request) {
       }
     } else if (transactionData.type === 'time_deposit_redemption') {
       // 处理定期兑付交易
-      const timeDepositAsset = await assetRepository.getById(transactionData.fromAssetId);
-      const cashAsset = await assetRepository.getById(transactionData.toAssetId);
+      const timeDepositAsset = await assetRepository.getById(userId, transactionData.fromAssetId);
+      const cashAsset = await assetRepository.getById(userId, transactionData.toAssetId);
       
       if (timeDepositAsset && cashAsset) {
         // 更新现金资产余额
-        const updatedCashAsset = await assetRepository.update(transactionData.toAssetId, {
+        const updatedCashAsset = await assetRepository.update(userId, transactionData.toAssetId, {
           amount: cashAsset.amount + transactionData.amount
         });
         
         // 删除定期存款资产
-        await assetRepository.delete(transactionData.fromAssetId);
+        await assetRepository.delete(userId, transactionData.fromAssetId);
         
         if (updatedCashAsset) {
           // 记录活动
-          await activityRepository.create({
+          await activityRepository.create(userId, {
             action: 'REDEEM',
             objectType: 'TRANSACTION',
             objectId: transaction.id,
@@ -123,6 +125,7 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const userId = request.headers.get('x-user-id') || 'demo';
   try {
     const url = new URL(request.url);
     const id = url.pathname.split('/').pop();
@@ -136,30 +139,30 @@ export async function DELETE(request: Request) {
     }
     
     // 获取交易记录
-    const transaction = await transactionRepository.getById(id);
+    const transaction = await transactionRepository.getById(userId, id);
     if (transaction) {
       // 删除交易记录
-      await transactionRepository.delete(id);
+      await transactionRepository.delete(userId, id);
       
       // 回滚资产余额
       if (transaction.fromAssetId && transaction.toAssetId) {
-        const fromAsset = await assetRepository.getById(transaction.fromAssetId);
-        const toAsset = await assetRepository.getById(transaction.toAssetId);
+        const fromAsset = await assetRepository.getById(userId, transaction.fromAssetId);
+        const toAsset = await assetRepository.getById(userId, transaction.toAssetId);
         
         if (fromAsset && toAsset) {
           if (transaction.type === 'transfer') {
             // 回滚转账交易
-            await assetRepository.update(transaction.fromAssetId, {
+            await assetRepository.update(userId, transaction.fromAssetId, {
               amount: fromAsset.amount + transaction.amount
             });
             
-            await assetRepository.update(transaction.toAssetId, {
+            await assetRepository.update(userId, transaction.toAssetId, {
               amount: toAsset.amount - transaction.amount
             });
           } else if (transaction.type === 'time_deposit_redemption') {
             // 回滚定期兑付交易
             // 重新创建定期存款资产
-            await assetRepository.create({
+            await assetRepository.create(userId, {
               name: `定期存款 ${new Date(transaction.date).toISOString().split('T')[0]}`,
               type: 'other',
               currency: transaction.currency,
@@ -169,7 +172,7 @@ export async function DELETE(request: Request) {
             });
             
             // 更新现金资产余额
-            await assetRepository.update(transaction.toAssetId, {
+            await assetRepository.update(userId, transaction.toAssetId, {
               amount: toAsset.amount - transaction.amount
             });
           }

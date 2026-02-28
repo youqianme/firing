@@ -67,14 +67,19 @@ Web 端的核心页面和 API 路由目录。
   - `accounts/`: 账户（Account）API。
   - `activity/`: 时间轴（操作日志）API。
   - `assets/`: 资产 API（含 `[id]` 动态路由）。
-  - `dashboard/`: 仪表盘聚合数据 API。
-  - `dev/data/`: 开发辅助数据 API。
-  - `earnings/daily/`: 日收益与收益日历数据 API。
-  - `fire/`: FIRE 目标 API（`config/`、`status/`）。
+  - `auth/register/`: 用户注册API（预留）。
+  - `demo/init/`: 演示数据初始化API。
+  - `demo/reset/`: 演示数据重置API（游客账户专用）。
+  - `earnings/`: 收益数据API。
+  - `fire/`: FIRE 目标 API。
   - `liabilities/`: 负债 API（含 `[id]` 与 `payments/` 子资源）。
   - `market-data/`: 市场数据（手动配置）API。
-  - `time-deposits/`: 定期存款相关 API（如 `[assetId]/redeem/` 到期兑付）。
+  - `settings/`: 设置API（含数据清空功能）。
   - `transactions/`: 交易/转账（Ledger）API（含 `[id]` 动态路由）。
+- **`components/`**: 共享组件。
+  - `DemoBanner.tsx`: 游客模式提示条组件。
+- **`context/`**: React上下文。
+  - `UserContext.tsx`: 用户状态管理（游客账户核心逻辑）。
 - **`activity/`**: 时间轴页面。
 - **`assets/`**: 资产管理页面。
 - **`earnings/`**: 收益日历页面。

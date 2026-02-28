@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useUser } from '../context/UserContext';
 import { formatCurrency } from '@firing/utils';
 import { Currency } from './types';
 
 export default function EarningsPage() {
+  const { userId } = useUser();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [earningsData, setEarningsData] = useState<any[]>([]);
@@ -12,8 +14,10 @@ export default function EarningsPage() {
 
   // 加载收益数据
   useEffect(() => {
-    loadEarningsData();
-  }, [currentMonth]);
+    if (userId) {
+      loadEarningsData();
+    }
+  }, [currentMonth, userId]);
 
   // 生成当月日历数据
   function generateCalendarDays(year: number, month: number) {
@@ -42,7 +46,9 @@ export default function EarningsPage() {
       const month = currentMonth.getMonth();
       
       // 通过 API 获取收益数据
-      const response = await fetch(`/api/earnings?year=${year}&month=${month}`);
+      const response = await fetch(`/api/earnings?year=${year}&month=${month}`, {
+        headers: { 'x-user-id': userId }
+      });
       const data = await response.json();
       
       // 转换日期格式

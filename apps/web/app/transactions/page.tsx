@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useUser } from '../context/UserContext';
 import { formatCurrency } from '@firing/utils';
 import { formatDate } from '@firing/utils';
 import { AssetType, TransactionType, type Asset, type Transaction, type Currency } from './types';
 
 export default function TransactionsPage() {
+  const { userId } = useUser();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -20,8 +22,11 @@ export default function TransactionsPage() {
 
   // 加载数据
   useEffect(() => {
+    if (!userId) return;
+
     const controller = new AbortController();
     const signal = controller.signal;
+    const headers = { 'x-user-id': userId };
 
     async function loadData() {
       try {
@@ -29,8 +34,8 @@ export default function TransactionsPage() {
 
         // 通过 API 获取交易和资产
         const [transactionsResponse, assetsResponse] = await Promise.all([
-          fetch('/api/transactions', { signal }),
-          fetch('/api/assets', { signal })
+          fetch('/api/transactions', { signal, headers }),
+          fetch('/api/assets', { signal, headers })
         ]);
 
         const loadedTransactions = await transactionsResponse.json();
@@ -57,7 +62,7 @@ export default function TransactionsPage() {
     return () => {
       controller.abort();
     };
-  }, []);
+  }, [userId]);
 
   // 处理表单输入变化
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
@@ -106,6 +111,7 @@ export default function TransactionsPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-user-id': userId
         },
         body: JSON.stringify({
           type: TransactionType.TRANSFER,
@@ -168,6 +174,7 @@ export default function TransactionsPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-user-id': userId
         },
         body: JSON.stringify({
           type: TransactionType.REDEEM,
@@ -215,13 +222,16 @@ export default function TransactionsPage() {
         // 通过 API 删除交易
         const response = await fetch(`/api/transactions/${transaction.id}`, {
           method: 'DELETE',
+          headers: { 'x-user-id': userId }
         });
 
         if (response.ok) {
           // 更新列表
           setTransactions(prev => prev.filter(t => t.id !== transaction.id));
           // 重新加载资产列表
-          const assetsResponse = await fetch('/api/assets');
+          const assetsResponse = await fetch('/api/assets', {
+            headers: { 'x-user-id': userId }
+          });
           const loadedAssets = await assetsResponse.json();
           setAssets(loadedAssets);
         }
@@ -281,7 +291,9 @@ export default function TransactionsPage() {
           <h1 className="text-3xl font-bold text-slate-900">交易台账</h1>
           <button
             onClick={async () => {
-              const assetsResponse = await fetch('/api/assets');
+              const assetsResponse = await fetch('/api/assets', {
+                headers: { 'x-user-id': userId }
+              });
               const loadedAssets = await assetsResponse.json();
               setAssets(loadedAssets);
             }}

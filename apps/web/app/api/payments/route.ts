@@ -8,9 +8,10 @@ import {
 // 初始化数据库
 initializeDatabase();
 
-export async function GET() {
+export async function GET(request: Request) {
+  const userId = request.headers.get('x-user-id') || 'demo';
   try {
-    const payments = await paymentRepository.getAll();
+    const payments = await paymentRepository.getAll(userId);
     return new Response(JSON.stringify(payments), {
       status: 200,
       headers: {
@@ -28,23 +29,24 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const userId = request.headers.get('x-user-id') || 'demo';
   try {
     const paymentData = await request.json();
     
     // 创建还款记录
-    const payment = await paymentRepository.create(paymentData);
+    const payment = await paymentRepository.create(userId, paymentData);
     
     // 更新负债余额
-    const liability = await liabilityRepository.getById(paymentData.liabilityId);
+    const liability = await liabilityRepository.getById(userId, paymentData.liabilityId);
     if (liability) {
       const updatedBalance = liability.balance - paymentData.amount;
-      const updatedLiability = await liabilityRepository.update(paymentData.liabilityId, {
+      const updatedLiability = await liabilityRepository.update(userId, paymentData.liabilityId, {
         balance: updatedBalance
       });
       
       if (updatedLiability) {
         // 记录活动
-        await activityRepository.create({
+        await activityRepository.create(userId, {
           action: 'REPAYMENT',
           objectType: 'LIABILITY',
           objectId: updatedLiability.id,

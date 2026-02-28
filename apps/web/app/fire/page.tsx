@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { formatCurrency } from '@firing/utils';
+import { useUser } from '../context/UserContext';
 
 export default function FirePage() {
+  const { userId } = useUser();
   const [fireConfig, setFireConfig] = useState<any>(null);
   const [assets, setAssets] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -15,16 +17,20 @@ export default function FirePage() {
 
   // 加载数据
   useEffect(() => {
-    loadData();
-  }, []);
+    if (userId) {
+      loadData();
+    }
+  }, [userId]);
 
   // 加载数据
   async function loadData() {
     try {
       setIsLoading(true);
 
+      const headers = { 'x-user-id': userId };
+
       // 通过 API 获取 FIRE 配置
-      const configResponse = await fetch('/api/fire');
+      const configResponse = await fetch('/api/fire', { headers });
       const loadedConfig = await configResponse.json();
       setFireConfig(loadedConfig);
 
@@ -36,7 +42,7 @@ export default function FirePage() {
       }
 
       // 通过 API 获取资产
-      const assetsResponse = await fetch('/api/assets');
+      const assetsResponse = await fetch('/api/assets', { headers });
       const loadedAssets = await assetsResponse.json();
       setAssets(loadedAssets);
     } catch (error) {
@@ -75,6 +81,7 @@ export default function FirePage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-user-id': userId
         },
         body: JSON.stringify({
           annualExpense: formData.annualExpense,

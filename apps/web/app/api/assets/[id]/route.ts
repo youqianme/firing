@@ -5,15 +5,16 @@ import { assetRepository, activityRepository } from '../../../../lib/dataAccess'
 initializeDatabase();
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const userId = request.headers.get('x-user-id') || 'demo';
   try {
     const { id } = await params;
     
-    const existingAsset = await assetRepository.getById(id);
+    const existingAsset = await assetRepository.getById(userId, id);
     if (existingAsset) {
-      const success = await assetRepository.delete(id);
+      const success = await assetRepository.delete(userId, id);
       if (success) {
         // 记录活动
-        await activityRepository.create({
+        await activityRepository.create(userId, {
           action: 'DELETE',
           objectType: 'ASSET',
           objectId: existingAsset.id,
@@ -49,17 +50,18 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 }
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const userId = request.headers.get('x-user-id') || 'demo';
   try {
     const { id } = await params;
     
     const assetData = await request.json();
-    const existingAsset = await assetRepository.getById(id);
+    const existingAsset = await assetRepository.getById(userId, id);
     
     if (existingAsset) {
-      const updatedAsset = await assetRepository.update(id, assetData);
+      const updatedAsset = await assetRepository.update(userId, id, assetData);
       if (updatedAsset) {
         // 记录活动
-        await activityRepository.create({
+        await activityRepository.create(userId, {
           action: 'UPDATE',
           objectType: 'ASSET',
           objectId: updatedAsset.id,

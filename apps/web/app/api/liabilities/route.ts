@@ -7,9 +7,10 @@ import {
 // 初始化数据库
 initializeDatabase();
 
-export async function GET() {
+export async function GET(request: Request) {
+  const userId = request.headers.get('x-user-id') || 'demo';
   try {
-    const liabilities = await liabilityRepository.getAll();
+    const liabilities = await liabilityRepository.getAll(userId);
     return new Response(JSON.stringify(liabilities), {
       status: 200,
       headers: {
@@ -27,12 +28,13 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const userId = request.headers.get('x-user-id') || 'demo';
   try {
     const liability = await request.json();
-    const newLiability = await liabilityRepository.create(liability);
+    const newLiability = await liabilityRepository.create(userId, liability);
     
     // 记录活动
-    await activityRepository.create({
+    await activityRepository.create(userId, {
       action: 'CREATE',
       objectType: 'LIABILITY',
       objectId: newLiability.id,
@@ -59,6 +61,7 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const userId = request.headers.get('x-user-id') || 'demo';
   try {
     const url = new URL(request.url);
     const id = url.pathname.split('/').pop();
@@ -72,13 +75,13 @@ export async function PUT(request: Request) {
     }
     
     const liabilityData = await request.json();
-    const existingLiability = await liabilityRepository.getById(id);
+    const existingLiability = await liabilityRepository.getById(userId, id);
     
     if (existingLiability) {
-      const updatedLiability = await liabilityRepository.update(id, liabilityData);
+      const updatedLiability = await liabilityRepository.update(userId, id, liabilityData);
       if (updatedLiability) {
         // 记录活动
-        await activityRepository.create({
+        await activityRepository.create(userId, {
           action: 'UPDATE',
           objectType: 'LIABILITY',
           objectId: updatedLiability.id,
@@ -116,6 +119,7 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const userId = request.headers.get('x-user-id') || 'demo';
   try {
     const url = new URL(request.url);
     const id = url.pathname.split('/').pop();
@@ -128,12 +132,12 @@ export async function DELETE(request: Request) {
       });
     }
     
-    const existingLiability = await liabilityRepository.getById(id);
+    const existingLiability = await liabilityRepository.getById(userId, id);
     if (existingLiability) {
-      const success = await liabilityRepository.delete(id);
+      const success = await liabilityRepository.delete(userId, id);
       if (success) {
         // 记录活动
-        await activityRepository.create({
+        await activityRepository.create(userId, {
           action: 'DELETE',
           objectType: 'LIABILITY',
           objectId: existingLiability.id,

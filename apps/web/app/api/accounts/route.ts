@@ -7,9 +7,10 @@ import {
 // 初始化数据库
 initializeDatabase();
 
-export async function GET() {
+export async function GET(request: Request) {
+  const userId = request.headers.get('x-user-id') || 'demo';
   try {
-    const accounts = await accountRepository.getAll();
+    const accounts = await accountRepository.getAll(userId);
     return new Response(JSON.stringify(accounts), {
       status: 200,
       headers: {
@@ -27,12 +28,13 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const userId = request.headers.get('x-user-id') || 'demo';
   try {
     const accountData = await request.json();
-    const newAccount = await accountRepository.create(accountData);
+    const newAccount = await accountRepository.create(userId, accountData);
     
     // 记录活动
-    await activityRepository.create({
+    await activityRepository.create(userId, {
       action: 'CREATE',
       objectType: 'ACCOUNT',
       objectId: newAccount.id,
@@ -59,6 +61,7 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const userId = request.headers.get('x-user-id') || 'demo';
   try {
     const url = new URL(request.url);
     const id = url.pathname.split('/').pop();
@@ -72,13 +75,13 @@ export async function PUT(request: Request) {
     }
     
     const accountData = await request.json();
-    const existingAccount = await accountRepository.getById(id);
+    const existingAccount = await accountRepository.getById(userId, id);
     
     if (existingAccount) {
-      const updatedAccount = await accountRepository.update(id, accountData);
+      const updatedAccount = await accountRepository.update(userId, id, accountData);
       if (updatedAccount) {
         // 记录活动
-        await activityRepository.create({
+        await activityRepository.create(userId, {
           action: 'UPDATE',
           objectType: 'ACCOUNT',
           objectId: updatedAccount.id,
@@ -114,6 +117,7 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const userId = request.headers.get('x-user-id') || 'demo';
   try {
     const url = new URL(request.url);
     const id = url.pathname.split('/').pop();
@@ -126,12 +130,12 @@ export async function DELETE(request: Request) {
       });
     }
     
-    const existingAccount = await accountRepository.getById(id);
+    const existingAccount = await accountRepository.getById(userId, id);
     if (existingAccount) {
-      const success = await accountRepository.delete(id);
+      const success = await accountRepository.delete(userId, id);
       if (success) {
         // 记录活动
-        await activityRepository.create({
+        await activityRepository.create(userId, {
           action: 'DELETE',
           objectType: 'ACCOUNT',
           objectId: existingAccount.id,

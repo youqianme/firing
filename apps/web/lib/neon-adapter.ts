@@ -15,12 +15,19 @@ export class NeonDatabaseAdapter implements DatabaseAdapter {
 
   /**
    * 将 SQLite 风格的 SQL (使用 ?) 转换为 Postgres 风格 (使用 $1, $2...)
+   * 同时为大小写敏感的标识符添加引号
    */
   private convertSql(sql: string): string {
     let index = 1;
-    // 简单的替换，假设 SQL 字符串中不包含字面量 '?'
-    // 对于更复杂的情况，可能需要更健壮的解析器
-    return sql.replace(/\?/g, () => `$${index++}`);
+    
+    // 第一步：为包含大小写字母的标识符（如 userId）添加双引号
+    // 匹配常见的列名和表名：包含大小写字母的单词
+    let converted = sql.replace(/\b(userId|accountId|includeInFire|unitPrice|interestRate|startDate|endDate|valuationMethod|updatedAt|createdAt|fromAssetId|toAssetId|baseCurrency|privacyMode|objectType|objectId|objectName|oldAmount)\b/g, '"$1"');
+    
+    // 第二步：将参数占位符 ? 替换为 $1, $2...
+    converted = converted.replace(/\?/g, () => `$${index++}`);
+    
+    return converted;
   }
 
   /**

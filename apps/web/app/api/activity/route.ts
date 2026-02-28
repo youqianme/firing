@@ -5,6 +5,7 @@ import { activityRepository } from '../../../lib/dataAccess';
 initializeDatabase();
 
 export async function GET(request: Request) {
+  const userId = request.headers.get('x-user-id') || 'demo';
   try {
     const url = new URL(request.url);
     const filter = url.searchParams.get('filter') || 'ALL';
@@ -14,9 +15,9 @@ export async function GET(request: Request) {
 
     let activities;
     if (filter === 'ALL') {
-      activities = await activityRepository.getAll(pageSize, offset);
+      activities = await activityRepository.getAll(userId, pageSize, offset);
     } else {
-      activities = await activityRepository.getByObjectType(filter as any, pageSize, offset);
+      activities = await activityRepository.getByObjectType(userId, filter as any, pageSize, offset);
     }
 
     return new Response(JSON.stringify(activities), {

@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useUser } from '../context/UserContext';
 import { formatCurrency } from '@firing/utils';
 import { formatDate } from '@firing/utils';
 import { Currency, LiabilityType, type Liability, type Payment } from './types';
 
 export default function LiabilitiesPage() {
+  const { userId } = useUser();
   const [liabilities, setLiabilities] = useState<Liability[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,15 +33,22 @@ export default function LiabilitiesPage() {
 
   // 加载数据
   useEffect(() => {
-    async function loadData() {
-      try {
-        setIsLoading(true);
+    if (userId) {
+      loadData();
+    }
+  }, [userId]);
 
-        // 通过 API 获取负债和还款记录
-        const [liabilitiesResponse, paymentsResponse] = await Promise.all([
-          fetch('/api/liabilities'),
-          fetch('/api/payments')
-        ]);
+  async function loadData() {
+    try {
+      setIsLoading(true);
+
+      const headers = { 'x-user-id': userId };
+
+      // 通过 API 获取负债和还款记录
+      const [liabilitiesResponse, paymentsResponse] = await Promise.all([
+        fetch('/api/liabilities', { headers }),
+        fetch('/api/payments', { headers })
+      ]);
 
         const loadedLiabilities = await liabilitiesResponse.json();
         const loadedPayments = await paymentsResponse.json();
@@ -52,10 +61,7 @@ export default function LiabilitiesPage() {
         setIsLoading(false);
       }
     }
-
-    loadData();
-  }, []);
-
+  
   // 处理表单输入变化
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
     const { name, value } = e.target;
@@ -93,6 +99,7 @@ export default function LiabilitiesPage() {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
+            'x-user-id': userId
           },
           body: JSON.stringify(formData),
         });
@@ -111,6 +118,7 @@ export default function LiabilitiesPage() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-user-id': userId
           },
           body: JSON.stringify({
             name: formData.name,
@@ -161,6 +169,7 @@ export default function LiabilitiesPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-user-id': userId
         },
         body: JSON.stringify({
           liabilityId: selectedLiability.id,
@@ -232,6 +241,7 @@ export default function LiabilitiesPage() {
         // 通过 API 删除负债
         const response = await fetch(`/api/liabilities/${liability.id}`, {
           method: 'DELETE',
+          headers: { 'x-user-id': userId }
         });
 
         if (response.ok) {

@@ -4,10 +4,11 @@ import { marketDataRepository } from '../../../lib/dataAccess';
 // 初始化数据库
 initializeDatabase();
 
-export async function GET() {
+export async function GET(request: Request) {
+  const userId = request.headers.get('x-user-id') || 'demo';
   try {
     // 获取所有市场数据
-    const allMarketData = await marketDataRepository.getAll();
+    const allMarketData = await marketDataRepository.getAll(userId);
     
     // 转换为前端需要的格式
     const formattedData = {
@@ -34,20 +35,21 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const userId = request.headers.get('x-user-id') || 'demo';
   try {
     const data = await request.json();
     
     // 保存市场数据
     if (data.usdToCny) {
-      await marketDataRepository.upsert('USD/CNY', data.usdToCny);
+      await marketDataRepository.upsert(userId, 'USD/CNY', data.usdToCny);
     }
     
     if (data.hkdToCny) {
-      await marketDataRepository.upsert('HKD/CNY', data.hkdToCny);
+      await marketDataRepository.upsert(userId, 'HKD/CNY', data.hkdToCny);
     }
     
     if (data.goldPriceCny) {
-      await marketDataRepository.upsert('GOLD/CNY', data.goldPriceCny);
+      await marketDataRepository.upsert(userId, 'GOLD/CNY', data.goldPriceCny);
     }
     
     return new Response(JSON.stringify({ message: 'Market data saved successfully' }), {

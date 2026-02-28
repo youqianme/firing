@@ -38,6 +38,22 @@ export const convertCurrency = (
 };
 
 /**
+ * 格式化大数显示（缩写）
+ */
+const formatLargeNumber = (num: number): string => {
+  const absNum = Math.abs(num);
+  const sign = num < 0 ? '-' : '';
+  
+  if (absNum >= 100000000) { // 亿
+    return `${sign}${(absNum / 100000000).toFixed(2)}亿`;
+  } else if (absNum >= 10000) { // 万
+    return `${sign}${(absNum / 10000).toFixed(2)}万`;
+  }
+  
+  return `${sign}${absNum.toFixed(2)}`;
+};
+
+/**
  * 格式化货币显示
  */
 export const formatCurrency = (
@@ -45,6 +61,13 @@ export const formatCurrency = (
   currency: string = 'CNY',
   options: Intl.NumberFormatOptions = {}
 ): string => {
+  const symbol = getCurrencySymbol(currency);
+  
+  // 如果数字超过 1 万，使用缩写格式
+  if (Math.abs(amount) >= 10000) {
+    return `${symbol}${formatLargeNumber(amount)}`;
+  }
+  
   const defaultOptions: Intl.NumberFormatOptions = {
     style: 'currency',
     currency,

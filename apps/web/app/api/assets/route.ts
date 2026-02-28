@@ -4,11 +4,12 @@ import {
   activityRepository
 } from '../../../lib/dataAccess';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const userId = request.headers.get('x-user-id') || 'demo';
   // 确保数据库已初始化
   await initializeDatabase();
   try {
-    const assets = await assetRepository.getAll();
+    const assets = await assetRepository.getAll(userId);
     return new Response(JSON.stringify(assets), {
       status: 200,
       headers: {
@@ -26,14 +27,15 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const userId = request.headers.get('x-user-id') || 'demo';
   // 确保数据库已初始化
   await initializeDatabase();
   try {
     const assetData = await request.json();
-    const newAsset = await assetRepository.create(assetData);
+    const newAsset = await assetRepository.create(userId, assetData);
     
     // 记录活动
-    await activityRepository.create({
+    await activityRepository.create(userId, {
       action: 'CREATE',
       objectType: 'ASSET',
       objectId: newAsset.id,
