@@ -73,7 +73,7 @@ export interface MarketData {
   symbol: string;
   price: number;
   updatedAt: string;
-  source: string;
+  source: 'MANUAL' | 'AUTO';
 }
 
 // 活动类型
