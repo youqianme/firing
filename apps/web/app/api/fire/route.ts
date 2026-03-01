@@ -1,11 +1,9 @@
 import { initializeDatabase } from '../../../lib/database';
 import { fireConfigRepository } from '../../../lib/dataAccess';
 
-// 初始化数据库
-initializeDatabase();
-
 export async function GET(request: Request) {
   const userId = request.headers.get('x-user-id') || 'demo';
+  await initializeDatabase();
   try {
     const fireConfig = await fireConfigRepository.get(userId);
     return new Response(JSON.stringify(fireConfig), {
@@ -26,6 +24,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const userId = request.headers.get('x-user-id') || 'demo';
+  await initializeDatabase();
   try {
     const config = await request.json();
     const updatedConfig = await fireConfigRepository.upsert(userId, config);

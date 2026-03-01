@@ -4,13 +4,22 @@ import {
   assetRepository, 
   liabilityRepository, 
   fireConfigRepository, 
-  userSettingsRepository 
+  userSettingsRepository,
+  accountRepository,
+  transactionRepository,
+  paymentRepository,
+  marketDataRepository,
+  activityRepository
 } from '../../../../lib/dataAccess';
 import { 
   mockAssets, 
   mockLiabilities, 
   mockFireConfig, 
-  mockUserSettings 
+  mockUserSettings,
+  mockAccounts,
+  mockTransactions,
+  mockPayments,
+  mockMarketData
 } from '@firing/utils';
 
 export async function POST(request: Request) {
@@ -58,6 +67,12 @@ export async function POST(request: Request) {
 
     // Re-seed data (same logic as init)
     
+    // Initialize Accounts
+    for (const account of mockAccounts) {
+      const { id, ...accountData } = account;
+      await accountRepository.create(userId, accountData);
+    }
+
     // Initialize Assets
     for (const asset of mockAssets) {
       const { id, createdAt, updatedAt, ...assetData } = asset;
@@ -68,6 +83,24 @@ export async function POST(request: Request) {
     for (const liability of mockLiabilities) {
       const { id, createdAt, updatedAt, ...liabilityData } = liability;
       await liabilityRepository.create(userId, liabilityData);
+    }
+
+    // Initialize Transactions
+    for (const transaction of mockTransactions) {
+      const { id, createdAt, ...transactionData } = transaction;
+      await transactionRepository.create(userId, transactionData);
+    }
+
+    // Initialize Payments
+    for (const payment of mockPayments) {
+      const { id, createdAt, ...paymentData } = payment;
+      await paymentRepository.create(userId, paymentData);
+    }
+
+    // Initialize Market Data
+    for (const marketData of mockMarketData) {
+      const { id, ...marketDataData } = marketData;
+      await marketDataRepository.upsert(marketDataData.symbol, marketDataData.price, marketDataData.source);
     }
 
     // Initialize FireConfig

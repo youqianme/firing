@@ -349,7 +349,7 @@ export default function SettingsPage() {
         <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-8">
           <h2 className="text-xl font-semibold text-slate-900 mb-6">数据管理</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             {/* 导出数据 */}
             <div className="bg-slate-50 p-6 rounded-xl">
               <h3 className="text-sm font-medium text-slate-700 mb-3">导出数据</h3>

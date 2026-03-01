@@ -529,10 +529,18 @@ export const activityRepository = {
 // FIRE 配置相关操作
 export const fireConfigRepository = {
   // 获取 FIRE 配置
-  get: async (userId: string): Promise<FireConfig | undefined> => {
+  get: async (userId: string): Promise<FireConfig> => {
     const adapter = getAdapter();
     const row = await adapter.get('SELECT * FROM fireConfig WHERE id = ? ORDER BY updatedAt DESC LIMIT 1', [userId]);
-    if (!row) return undefined;
+    if (!row) {
+      return {
+        id: userId,
+        annualExpense: 120000,
+        swr: 0.04,
+        updatedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+      };
+    }
     return {
       ...row,
       annualExpense: getProp(row, 'annualExpense'),

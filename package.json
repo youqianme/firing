@@ -13,7 +13,8 @@
     "build:web": "npm run build --workspace=firing-web",
     "build:mobile": "npm run export:web --workspace=firing-mobile",
     "start:web": "npm run start --workspace=firing-web",
-    "lint": "eslint apps/ packages/"
+    "lint": "eslint apps/ packages/",
+    "db:init": "node scripts/init-db.mjs"
   },
   "devDependencies": {
     "@types/node": "20.11.19",

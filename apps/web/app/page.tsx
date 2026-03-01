@@ -238,22 +238,22 @@ export default function Home() {
         </div>
 
         {/* 核心指标卡片 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
-            <div className="text-sm font-medium text-slate-500 mb-2">总资产</div>
-            <div className="text-2xl font-bold text-slate-900">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
+          <div className="bg-white rounded-xl p-4 md:p-6 border border-slate-200 shadow-sm">
+            <div className="text-sm font-medium text-slate-500 mb-1 md:mb-2">总资产</div>
+            <div className="text-xl md:text-2xl font-bold text-slate-900">
               {formatCurrency(totalAssets, baseCurrency)}
             </div>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
-            <div className="text-sm font-medium text-slate-500 mb-2">总负债</div>
-            <div className="text-2xl font-bold text-red-600">
+          <div className="bg-white rounded-xl p-4 md:p-6 border border-slate-200 shadow-sm">
+            <div className="text-sm font-medium text-slate-500 mb-1 md:mb-2">总负债</div>
+            <div className="text-xl md:text-2xl font-bold text-red-600">
               {formatCurrency(totalLiabilities, baseCurrency)}
             </div>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
-            <div className="text-sm font-medium text-slate-500 mb-2">净资产</div>
-            <div className="text-2xl font-bold text-slate-900">
+          <div className="bg-white rounded-xl p-4 md:p-6 border border-slate-200 shadow-sm">
+            <div className="text-sm font-medium text-slate-500 mb-1 md:mb-2">净资产</div>
+            <div className="text-xl md:text-2xl font-bold text-slate-900">
               {formatCurrency(netWorth, baseCurrency)}
             </div>
           </div>
