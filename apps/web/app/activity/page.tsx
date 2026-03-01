@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useUser } from '../context/UserContext';
 import { formatCurrency } from '@firing/utils';
 import { formatDateTime } from '@firing/utils';
 import { Currency, type Activity } from './types';
 
 export default function ActivityPage() {
+  const { userId } = useUser();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'ALL' | 'ASSET' | 'LIABILITY' | 'TRANSACTION'>('ALL');
@@ -15,6 +17,8 @@ export default function ActivityPage() {
 
   // 加载数据
   useEffect(() => {
+    if (!userId) return;
+
     const controller = new AbortController();
     const signal = controller.signal;
 
@@ -23,16 +27,20 @@ export default function ActivityPage() {
         setIsLoading(true);
 
         // 通过 API 获取活动数据
-        const response = await fetch(`/api/activity?filter=${filter}&page=${page}&pageSize=${pageSize}`, { signal });
+        const response = await fetch(`/api/activity?filter=${filter}&page=${page}&pageSize=${pageSize}`, {
+          signal,
+          headers: { 'x-user-id': userId }
+        });
         const loadedActivities = await response.json();
+        const safeActivities = Array.isArray(loadedActivities) ? loadedActivities : [];
 
         if (!signal.aborted) {
           if (page === 1) {
-            setActivities(loadedActivities);
+            setActivities(safeActivities);
           } else {
-            setActivities(prev => [...prev, ...loadedActivities]);
+            setActivities(prev => [...(Array.isArray(prev) ? prev : []), ...safeActivities]);
           }
-          setHasMore(loadedActivities.length === pageSize);
+          setHasMore(safeActivities.length === pageSize);
         }
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
@@ -51,7 +59,7 @@ export default function ActivityPage() {
     return () => {
       controller.abort();
     };
-  }, [filter, page]);
+  }, [filter, page, userId]);
 
   // 处理筛选变化
   function handleFilterChange(newFilter: typeof filter) {

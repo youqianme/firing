@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import { useUser } from '../context/UserContext';
 import { convertCurrency, formatCurrency } from '@firing/utils';
 import { formatDate } from '@firing/utils';
 import { Currency, AssetType, InvestmentSubType, type Asset } from './types';
 
 export default function AssetsPage() {
+  const { userId } = useUser();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,11 +30,14 @@ export default function AssetsPage() {
 
   // 加载数据
   useEffect(() => {
+    if (!userId) return;
+
     // 组件挂载后立即设置isAdding状态为false
     setIsAdding(false);
 
     const controller = new AbortController();
     const signal = controller.signal;
+    const headers = { 'x-user-id': userId };
 
     async function loadData() {
       try {
@@ -40,16 +45,16 @@ export default function AssetsPage() {
 
         // 获取资产和账户
         const [assetsResponse, accountsResponse] = await Promise.all([
-          fetch('/api/assets', { signal }),
-          fetch('/api/accounts', { signal })
+          fetch('/api/assets', { signal, headers }),
+          fetch('/api/accounts', { signal, headers })
         ]);
 
         const loadedAssets = await assetsResponse.json();
         const loadedAccounts = await accountsResponse.json();
 
         if (!signal.aborted) {
-          setAssets(loadedAssets);
-          setAccounts(loadedAccounts);
+          setAssets(Array.isArray(loadedAssets) ? loadedAssets : []);
+          setAccounts(Array.isArray(loadedAccounts) ? loadedAccounts : []);
         }
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
@@ -68,7 +73,7 @@ export default function AssetsPage() {
     return () => {
       controller.abort();
     };
-  }, []);
+  }, [userId]);
 
   // 处理表单输入变化
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
@@ -125,6 +130,7 @@ export default function AssetsPage() {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
+            'x-user-id': userId
           },
           body: JSON.stringify(updatedAssetData),
         });
@@ -132,7 +138,7 @@ export default function AssetsPage() {
         if (response.ok) {
           const updatedAsset = await response.json();
           // 更新列表
-          setAssets(prev => prev.map(a => a.id === updatedAsset.id ? updatedAsset : a));
+          setAssets(prev => (Array.isArray(prev) ? prev : []).map(a => a.id === updatedAsset.id ? updatedAsset : a));
           setEditingAsset(null);
           setIsAdding(false);
           resetForm();
@@ -160,6 +166,7 @@ export default function AssetsPage() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-user-id': userId
           },
           body: JSON.stringify(newAssetData),
         });
@@ -167,7 +174,7 @@ export default function AssetsPage() {
         if (response.ok) {
           const newAsset = await response.json();
           // 更新列表
-          setAssets(prev => [newAsset, ...prev]);
+          setAssets(prev => [newAsset, ...(Array.isArray(prev) ? prev : [])]);
           setIsAdding(false);
           resetForm();
         } else {
@@ -223,11 +230,12 @@ export default function AssetsPage() {
         // 通过 API 删除资产
         const response = await fetch(`/api/assets/${asset.id}`, {
           method: 'DELETE',
+          headers: { 'x-user-id': userId }
         });
 
         if (response.ok) {
           // 更新列表
-          setAssets(prev => prev.filter(a => a.id !== asset.id));
+          setAssets(prev => (Array.isArray(prev) ? prev : []).filter(a => a.id !== asset.id));
         } else {
           throw new Error('Failed to delete asset');
         }
@@ -269,19 +277,20 @@ export default function AssetsPage() {
 
   // 过滤资产
   const filteredAssets = useMemo(() => {
+    const safeAssets = Array.isArray(assets) ? assets : [];
     switch (activeFilter) {
       case 'cash':
-        return assets.filter(asset => asset.type === 'cash');
+        return safeAssets.filter(asset => asset.type === 'cash');
       case 'bank':
-        return assets.filter(asset => asset.type === 'bank');
+        return safeAssets.filter(asset => asset.type === 'bank');
       case 'investment':
-        return assets.filter(asset => asset.type === 'investment');
+        return safeAssets.filter(asset => asset.type === 'investment');
       case 'real_estate':
-        return assets.filter(asset => asset.type === 'real_estate');
+        return safeAssets.filter(asset => asset.type === 'real_estate');
       case 'other':
-        return assets.filter(asset => asset.type === 'other');
+        return safeAssets.filter(asset => asset.type === 'other');
       default:
-        return assets;
+        return safeAssets;
     }
   }, [assets, activeFilter]);
 

@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import '../styles/globals.css';
+import { UserProvider } from './context/UserContext';
+import { DemoBanner } from './components/DemoBanner';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -17,6 +19,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body className={inter.className}>
+        <UserProvider>
         <div className="flex">
           {/* 左侧菜单 */}
           <aside className="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 fixed top-0 left-0 bottom-0 z-10">
@@ -150,6 +153,8 @@ export default function RootLayout({
             </div>
           </main>
         </div>
+        <DemoBanner />
+        </UserProvider>
       </body>
     </html>
   );

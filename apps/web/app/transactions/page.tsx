@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useUser } from '../context/UserContext';
 import { formatCurrency } from '@firing/utils';
 import { formatDate } from '@firing/utils';
 import { AssetType, TransactionType, type Asset, type Transaction, type Currency } from './types';
 
 export default function TransactionsPage() {
+  const { userId } = useUser();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -20,8 +22,11 @@ export default function TransactionsPage() {
 
   // 加载数据
   useEffect(() => {
+    if (!userId) return;
+
     const controller = new AbortController();
     const signal = controller.signal;
+    const headers = { 'x-user-id': userId };
 
     async function loadData() {
       try {
@@ -29,16 +34,16 @@ export default function TransactionsPage() {
 
         // 通过 API 获取交易和资产
         const [transactionsResponse, assetsResponse] = await Promise.all([
-          fetch('/api/transactions', { signal }),
-          fetch('/api/assets', { signal })
+          fetch('/api/transactions', { signal, headers }),
+          fetch('/api/assets', { signal, headers })
         ]);
 
         const loadedTransactions = await transactionsResponse.json();
         const loadedAssets = await assetsResponse.json();
 
         if (!signal.aborted) {
-          setTransactions(loadedTransactions);
-          setAssets(loadedAssets);
+          setTransactions(Array.isArray(loadedTransactions) ? loadedTransactions : []);
+          setAssets(Array.isArray(loadedAssets) ? loadedAssets : []);
         }
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
@@ -57,7 +62,7 @@ export default function TransactionsPage() {
     return () => {
       controller.abort();
     };
-  }, []);
+  }, [userId]);
 
   // 处理表单输入变化
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
@@ -106,6 +111,7 @@ export default function TransactionsPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-user-id': userId
         },
         body: JSON.stringify({
           type: TransactionType.TRANSFER,
@@ -123,8 +129,8 @@ export default function TransactionsPage() {
         const { transaction, updatedFromAsset, updatedToAsset } = result;
 
         // 更新列表
-        setTransactions(prev => [transaction, ...prev]);
-        setAssets(prev => prev.map(a => 
+        setTransactions(prev => [transaction, ...(Array.isArray(prev) ? prev : [])]);
+        setAssets(prev => (Array.isArray(prev) ? prev : []).map(a => 
           a.id === updatedFromAsset.id ? updatedFromAsset :
           a.id === updatedToAsset.id ? updatedToAsset : a
         ));
@@ -168,6 +174,7 @@ export default function TransactionsPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-user-id': userId
         },
         body: JSON.stringify({
           type: TransactionType.REDEEM,
@@ -185,8 +192,8 @@ export default function TransactionsPage() {
         const { transaction, updatedCashAsset, deletedAssetId } = result;
 
         // 更新列表
-        setTransactions(prev => [transaction, ...prev]);
-        setAssets(prev => prev
+        setTransactions(prev => [transaction, ...(Array.isArray(prev) ? prev : [])]);
+        setAssets(prev => (Array.isArray(prev) ? prev : [])
           .filter(a => a.id !== deletedAssetId)
           .map(a => a.id === updatedCashAsset.id ? updatedCashAsset : a)
         );
@@ -215,15 +222,18 @@ export default function TransactionsPage() {
         // 通过 API 删除交易
         const response = await fetch(`/api/transactions/${transaction.id}`, {
           method: 'DELETE',
+          headers: { 'x-user-id': userId }
         });
 
         if (response.ok) {
           // 更新列表
           setTransactions(prev => prev.filter(t => t.id !== transaction.id));
           // 重新加载资产列表
-          const assetsResponse = await fetch('/api/assets');
+          const assetsResponse = await fetch('/api/assets', {
+            headers: { 'x-user-id': userId }
+          });
           const loadedAssets = await assetsResponse.json();
-          setAssets(loadedAssets);
+          setAssets(Array.isArray(loadedAssets) ? loadedAssets : []);
         }
       } catch (error) {
         console.error('Failed to delete transaction:', error);
@@ -254,12 +264,12 @@ export default function TransactionsPage() {
 
   // 获取现金资产列表
   function getCashAssets(): Asset[] {
-    return assets.filter(a => a.type === AssetType.CASH);
+    return Array.isArray(assets) ? assets.filter(a => a.type === AssetType.CASH) : [];
   }
 
   // 获取定期存款资产列表
   function getTimeDepositAssets(): Asset[] {
-    return assets.filter(a => a.type === AssetType.TIME_DEPOSIT || a.type === AssetType.TIME_DEPOSIT_ALT);
+    return Array.isArray(assets) ? assets.filter(a => a.type === AssetType.TIME_DEPOSIT || a.type === AssetType.TIME_DEPOSIT_ALT) : [];
   }
 
   if (isLoading) {
@@ -281,9 +291,11 @@ export default function TransactionsPage() {
           <h1 className="text-3xl font-bold text-slate-900">交易台账</h1>
           <button
             onClick={async () => {
-              const assetsResponse = await fetch('/api/assets');
+              const assetsResponse = await fetch('/api/assets', {
+                headers: { 'x-user-id': userId }
+              });
               const loadedAssets = await assetsResponse.json();
-              setAssets(loadedAssets);
+              setAssets(Array.isArray(loadedAssets) ? loadedAssets : []);
             }}
             className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg font-medium hover:bg-slate-50 transition-colors"
           >

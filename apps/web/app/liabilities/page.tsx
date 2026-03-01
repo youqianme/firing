@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useUser } from '../context/UserContext';
 import { formatCurrency } from '@firing/utils';
 import { formatDate } from '@firing/utils';
 import { Currency, LiabilityType, type Liability, type Payment } from './types';
 
 export default function LiabilitiesPage() {
+  const { userId } = useUser();
   const [liabilities, setLiabilities] = useState<Liability[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,31 +33,35 @@ export default function LiabilitiesPage() {
 
   // 加载数据
   useEffect(() => {
-    async function loadData() {
-      try {
-        setIsLoading(true);
+    if (userId) {
+      loadData();
+    }
+  }, [userId]);
 
-        // 通过 API 获取负债和还款记录
-        const [liabilitiesResponse, paymentsResponse] = await Promise.all([
-          fetch('/api/liabilities'),
-          fetch('/api/payments')
-        ]);
+  async function loadData() {
+    try {
+      setIsLoading(true);
+
+      const headers = { 'x-user-id': userId };
+
+      // 通过 API 获取负债和还款记录
+      const [liabilitiesResponse, paymentsResponse] = await Promise.all([
+        fetch('/api/liabilities', { headers }),
+        fetch('/api/payments', { headers })
+      ]);
 
         const loadedLiabilities = await liabilitiesResponse.json();
         const loadedPayments = await paymentsResponse.json();
 
-        setLiabilities(loadedLiabilities);
-        setPayments(loadedPayments);
+        setLiabilities(Array.isArray(loadedLiabilities) ? loadedLiabilities : []);
+        setPayments(Array.isArray(loadedPayments) ? loadedPayments : []);
       } catch (error) {
         console.error('Failed to load data:', error);
       } finally {
         setIsLoading(false);
       }
     }
-
-    loadData();
-  }, []);
-
+  
   // 处理表单输入变化
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
     const { name, value } = e.target;
@@ -93,6 +99,7 @@ export default function LiabilitiesPage() {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
+            'x-user-id': userId
           },
           body: JSON.stringify(formData),
         });
@@ -100,7 +107,7 @@ export default function LiabilitiesPage() {
         if (response.ok) {
           const updatedLiability = await response.json();
           // 更新列表
-          setLiabilities(prev => prev.map(l => l.id === updatedLiability.id ? updatedLiability : l));
+          setLiabilities(prev => (Array.isArray(prev) ? prev : []).map(l => l.id === updatedLiability.id ? updatedLiability : l));
           setEditingLiability(null);
           setIsAdding(false);
           resetForm();
@@ -111,6 +118,7 @@ export default function LiabilitiesPage() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-user-id': userId
           },
           body: JSON.stringify({
             name: formData.name,
@@ -127,7 +135,7 @@ export default function LiabilitiesPage() {
         if (response.ok) {
           const newLiability = await response.json();
           // 更新列表
-          setLiabilities(prev => [newLiability, ...prev]);
+          setLiabilities(prev => [newLiability, ...(Array.isArray(prev) ? prev : [])]);
           setIsAdding(false);
           resetForm();
         }
@@ -161,6 +169,7 @@ export default function LiabilitiesPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-user-id': userId
         },
         body: JSON.stringify({
           liabilityId: selectedLiability.id,
@@ -175,8 +184,8 @@ export default function LiabilitiesPage() {
         const { payment, updatedLiability } = result;
 
         // 更新列表
-        setPayments(prev => [payment, ...prev]);
-        setLiabilities(prev => prev.map(l => l.id === updatedLiability.id ? updatedLiability : l));
+        setPayments(prev => [payment, ...(Array.isArray(prev) ? prev : [])]);
+        setLiabilities(prev => (Array.isArray(prev) ? prev : []).map(l => l.id === updatedLiability.id ? updatedLiability : l));
         setIsRecordingPayment(false);
         setSelectedLiability(null);
         resetPaymentForm();
@@ -232,11 +241,12 @@ export default function LiabilitiesPage() {
         // 通过 API 删除负债
         const response = await fetch(`/api/liabilities/${liability.id}`, {
           method: 'DELETE',
+          headers: { 'x-user-id': userId }
         });
 
         if (response.ok) {
           // 更新列表
-          setLiabilities(prev => prev.filter(l => l.id !== liability.id));
+          setLiabilities(prev => (Array.isArray(prev) ? prev : []).filter(l => l.id !== liability.id));
         }
       } catch (error) {
         console.error('Failed to delete liability:', error);
@@ -252,7 +262,7 @@ export default function LiabilitiesPage() {
 
   // 获取负债的还款记录
   function getLiabilityPayments(liabilityId: string): Payment[] {
-    return payments.filter(p => p.liabilityId === liabilityId);
+    return Array.isArray(payments) ? payments.filter(p => p.liabilityId === liabilityId) : [];
   }
 
   // 计算负债的剩余天数

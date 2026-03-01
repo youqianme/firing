@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useUser } from '../context/UserContext';
 import { formatCurrency } from '@firing/utils';
 import { Currency } from './types';
 
 export default function SettingsPage() {
+  const { userId } = useUser();
   const [settings, setSettings] = useState<any>({
     baseCurrency: 'CNY',
     privacyMode: false
@@ -16,15 +18,19 @@ export default function SettingsPage() {
 
   // 加载设置
   useEffect(() => {
-    loadSettings();
-  }, []);
+    if (userId) {
+      loadSettings();
+    }
+  }, [userId]);
 
   // 加载设置数据
   async function loadSettings() {
     try {
       setIsLoading(true);
       // 通过 API 获取用户设置
-      const response = await fetch('/api/settings');
+      const response = await fetch('/api/settings', {
+        headers: { 'x-user-id': userId }
+      });
       const data = await response.json();
       setSettings({
         baseCurrency: data.baseCurrency || 'CNY',
@@ -50,6 +56,7 @@ export default function SettingsPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-user-id': userId
         },
         body: JSON.stringify(settings),
       });
@@ -69,12 +76,13 @@ export default function SettingsPage() {
   async function exportData() {
     try {
       // 获取所有数据
+      const headers = { 'x-user-id': userId };
       const [assetsResponse, liabilitiesResponse, transactionsResponse, activitiesResponse, fireConfigResponse] = await Promise.all([
-        fetch('/api/assets'),
-        fetch('/api/liabilities'),
-        fetch('/api/transactions'),
-        fetch('/api/activity'),
-        fetch('/api/fire')
+        fetch('/api/assets', { headers }),
+        fetch('/api/liabilities', { headers }),
+        fetch('/api/transactions', { headers }),
+        fetch('/api/activity', { headers }),
+        fetch('/api/fire', { headers })
       ]);
       
       const [assets, liabilities, transactions, activities, fireConfig] = await Promise.all([
@@ -152,7 +160,8 @@ export default function SettingsPage() {
         console.log('5. Calling clear data API at:', new Date().toISOString());
         // 通过 API 清空数据
         const response = await fetch('/api/settings', {
-          method: 'DELETE'
+          method: 'DELETE',
+          headers: { 'x-user-id': userId }
         });
         
         console.log('6. API response received, status:', response.status);
@@ -162,6 +171,12 @@ export default function SettingsPage() {
         setMessage('数据已清空');
         setTimeout(() => setMessage(''), 2000);
         console.log('8. Data cleared successfully');
+        
+        // 刷新页面以确保数据完全清除
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+        
       } catch (error) {
         console.error('9. Failed to clear data:', error);
         setMessage('清空失败');
@@ -176,25 +191,26 @@ export default function SettingsPage() {
     }
   }
 
-  // 添加测试数据
-  async function addTestData() {
-    console.log('=== addTestData function called ===');
+  // 填充演示数据
+  async function populateDemoData() {
+    console.log('=== populateDemoData function called ===');
     console.log('1. Function started at:', new Date().toISOString());
     
     // 显示确认对话框
     console.log('2. About to show confirm dialog');
-    const confirmed = window.confirm('确定要添加测试数据吗？\n\n这将生成覆盖所有功能的测试数据，包括：\n- 账户数据（支付宝、微信、银行卡等）\n- 市场数据（汇率、黄金价格）\n- 资产数据（现金、投资、定期存款等）\n- 负债数据（信用卡、个人贷款）\n- 交易数据（转账、消费、收入）\n- FIRE 配置数据\n- 活动记录\n\n测试数据不会覆盖现有数据（如果存在）。');
+    const confirmed = window.confirm('确定要填充演示数据吗？\n\n这将生成演示数据，包括：\n- 资产数据（招商银行储蓄卡、腾讯控股、自住房产）\n- 负债数据（房贷、花呗）\n- FIRE 配置数据（年度支出20万，安全提款率4.0%）\n- 用户设置（基础货币CNY，隐私模式关闭）\n\n演示数据不会覆盖现有数据（如果存在）。');
     
     console.log('3. Confirm dialog result:', confirmed);
     
     if (confirmed) {
-      console.log('4. User confirmed, proceeding to generate test data');
+      console.log('4. User confirmed, proceeding to populate demo data');
       setIsGeneratingTestData(true);
       try {
-        console.log('5. Calling test data API at:', new Date().toISOString());
-        // 通过 API 添加测试数据
+        console.log('5. Calling demo data API at:', new Date().toISOString());
+        // 通过 API 填充演示数据
         const response = await fetch('/api/settings/test-data', {
-          method: 'POST'
+          method: 'POST',
+          headers: { 'x-user-id': userId }
         });
         
         console.log('6. API response received, status:', response.status);
@@ -205,21 +221,27 @@ export default function SettingsPage() {
         
         const result = await response.json();
         console.log('7. API response parsed successfully:', result);
-        setMessage('测试数据添加成功！您现在可以浏览各个模块查看示例数据。');
+        
+        if (result.initialized) {
+          setMessage('演示数据填充成功！您现在可以浏览各个模块查看示例数据。');
+        } else {
+          setMessage('数据已存在，如需重置请使用"重置为演示数据"功能');
+        }
+        
         setTimeout(() => setMessage(''), 3000);
-        console.log('8. Test data generation completed successfully');
+        console.log('8. Demo data generation completed successfully');
       } catch (error) {
-        console.error('9. Failed to add test data:', error);
-        setMessage('添加测试数据失败，请稍后重试。');
+        console.error('9. Failed to populate demo data:', error);
+        setMessage('填充演示数据失败，请稍后重试。');
         setTimeout(() => setMessage(''), 3000);
       } finally {
         setIsGeneratingTestData(false);
         console.log('10. Function completed at:', new Date().toISOString());
-        console.log('=== addTestData function ended ===');
+        console.log('=== populateDemoData function ended ===');
       }
     } else {
       console.log('4. User cancelled, exiting function');
-      console.log('=== addTestData function ended (cancelled) ===');
+      console.log('=== populateDemoData function ended (cancelled) ===');
     }
   }
 
@@ -372,17 +394,52 @@ export default function SettingsPage() {
               <p className="text-xs text-slate-500">危险操作，此操作不可恢复</p>
             </div>
 
-            {/* 生成测试数据 */}
+            {/* 填充演示数据 */}
             <div className="bg-slate-50 p-6 rounded-xl">
-              <h3 className="text-sm font-medium text-slate-700 mb-3">生成测试数据</h3>
+              <h3 className="text-sm font-medium text-slate-700 mb-3">填充演示数据</h3>
               <button
-                onClick={addTestData}
+                onClick={populateDemoData}
                 disabled={isGeneratingTestData}
                 className={`w-full px-6 py-2 rounded-lg font-medium transition-colors mb-2 ${isGeneratingTestData ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'}`}
               >
-                {isGeneratingTestData ? '生成中...' : '生成测试数据'}
+                {isGeneratingTestData ? '填充中...' : '填充演示数据'}
               </button>
-              <p className="text-xs text-slate-500">一键生成覆盖所有功能的测试数据，快速体验系统功能</p>
+              <p className="text-xs text-slate-500">一键生成演示数据，快速体验系统功能（与游客账户系统保持一致）</p>
+            </div>
+
+            {/* 重置为演示数据 */}
+            <div className="bg-slate-50 p-6 rounded-xl">
+              <h3 className="text-sm font-medium text-slate-700 mb-3">重置为演示数据</h3>
+              <button
+                onClick={async () => {
+                  if (window.confirm('确定要重置为演示数据吗？这将清空所有现有数据并重新填充演示数据。')) {
+                    setIsGeneratingTestData(true);
+                    try {
+                      const response = await fetch('/api/demo/reset', {
+                        method: 'POST',
+                        headers: { 'x-user-id': userId }
+                      });
+                      
+                      if (response.ok) {
+                        setMessage('演示数据重置成功！页面将刷新...');
+                        setTimeout(() => window.location.reload(), 1500);
+                      } else {
+                        throw new Error('API 请求失败');
+                      }
+                    } catch (error) {
+                      console.error('Failed to reset demo data:', error);
+                      setMessage('重置失败，请稍后重试。');
+                    } finally {
+                      setIsGeneratingTestData(false);
+                    }
+                  }
+                }}
+                disabled={isGeneratingTestData}
+                className={`w-full px-6 py-2 rounded-lg font-medium transition-colors mb-2 ${isGeneratingTestData ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-yellow-200 text-yellow-700 hover:bg-yellow-300'}`}
+              >
+                {isGeneratingTestData ? '重置中...' : '重置为演示数据'}
+              </button>
+              <p className="text-xs text-slate-500">清空所有数据并重新填充演示数据（谨慎操作）</p>
             </div>
           </div>
         </div>

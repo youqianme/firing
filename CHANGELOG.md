@@ -1,5 +1,79 @@
 # 有钱么财务应用变更日志
 
+## [1.2.2] - 2026-03-01
+
+### ⚙️ 配置变更
+
+- **数据库配置简化**
+  - 移除默认 SQLite 数据库选项，统一使用 Neon (Postgres)
+  - 更新 `database.ts`，优先使用 `POSTGRES_URL` 或 `NEON_DATABASE_URL`
+  - 移除 `path` 和 `fs` 导入，不再需要本地文件系统
+  - 本地开发通过 `.env.local` 配置 Neon 数据库连接
+  - 如果未配置数据库，将抛出明确的错误提示
+  - 删除 SQLite 适配器文件 `apps/web/lib/database-adapter.ts`
+  - 从 `apps/web/package.json` 移除 `better-sqlite3` 和 `@types/better-sqlite3` 依赖
+  - 更新 `next.config.mjs`，移除 `serverExternalPackages` 和 webpack externals 配置
+  - 更新 `Dockerfile`，移除 SQLite 构建依赖（`python3 make g++`）和 volume 配置
+  - 更新 `config/.env.example`，移除 SQLite 配置，添加 Neon 配置示例
+  - 删除 `config/.env.production`（包含旧的 SQLite 配置）
+
+- **部署方式切换至 Vercel**
+  - 移除 Docker 部署相关文件和配置
+  - 删除 `Dockerfile` 和 `docker-compose.yml`
+  - 删除 `deploy/` 目录及其所有 Docker 部署脚本
+  - 更新 `README.md`，移除 Docker 部署文档，保留 Vercel 部署说明
+  - 项目现在完全使用 Vercel 部署，不再需要 Docker
+
+### �🐛 问题修复
+
+- **PostgreSQL 列名兼容性修复**
+  - 修复 Neon (Postgres) 适配器的大小写敏感列名问题
+  - 更新 `convertSql` 方法，自动检测和引用所有包含大写字母的标识符
+  - 支持的列名包括：`userId`、`accountId`、`includeInFire`、`updatedAt`、`createdAt` 等
+  - 避免为 SQL 关键字添加引号（如 `SELECT`、`FROM`、`WHERE`）
+
+- **marketData 表修复**
+  - 修复 `marketDataRepository` 中对不存在的 `userId` 列的引用
+  - 更新相关 API 路由以匹配新的方法签名
+  - 从 schema 确认 `marketData` 表没有 `userId` 列
+
+- **前端鲁棒性增强**
+  - 所有页面添加 `Array.isArray()` 安全检查
+  - 修复页面：transactions、assets、liabilities、fire、home、activity、accounts、earnings
+  - 当 API 返回错误对象 `{ error: "..." }` 而不是数组时，应用程序不会崩溃
+  - 所有数组操作（`.filter()`, `.map()`, `for...of`）都有安全防护
+
+## [1.2.1] - 2026-03-01
+
+### 🔧 优化与修复
+
+- **数字显示优化**
+  - 修复首页图标数字超过百万显示不完整的问题
+  - 优化 `formatCurrency` 函数，添加智能大数格式化功能
+  - 超过 1 万的数字自动缩写为 "万" 单位（如 ¥123.45万）
+  - 超过 1 亿的数字自动缩写为 "亿" 单位（如 ¥1.23亿）
+  - 小于 1 万的数字保持原有格式不变
+
+## [1.2.0] - 2026-02-28
+
+### 🚀 新特性
+
+- **游客账户系统**
+  - 实现零注册体验，用户无需注册即可使用完整功能
+  - 基于UUID的设备绑定机制，确保每个设备拥有独立的游客账户
+  - 完整的数据隔离实现，通过HTTP头`x-user-id`实现用户数据分离
+  - 支持一键清空所有个人数据
+  - 支持一键重新填充演示数据
+  - 添加全屏Loading状态，防止重复操作
+  - 游客模式提示条UI组件，提供清晰的用户指引
+
+### 🔧 优化与修复
+
+- **数据管理优化**
+  - 优化数据库初始化流程，避免重复初始化演示数据
+  - 改进API错误处理机制，提供更友好的错误提示
+  - 增强数据操作的原子性，确保数据一致性
+
 ## [1.1.0] - 2026-02-27
 
 ### 🚀 新特性

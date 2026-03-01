@@ -13,58 +13,62 @@ export class TransactionRepository {
 
   /**
    * 获取所有交易
+   * @param userId 用户ID
    * @returns 交易列表
    */
-  async getAll(): Promise<Transaction[]> {
+  async getAll(userId: string): Promise<Transaction[]> {
     const adapter = this.dbManager.getAdapter();
-    const result = await adapter.execute('SELECT * FROM transactions ORDER BY date DESC');
+    const result = await adapter.execute('SELECT * FROM transactions WHERE userId = ? ORDER BY date DESC', [userId]);
     return result.map(this.mapToTransaction);
   }
 
   /**
    * 根据ID获取交易
+   * @param userId 用户ID
    * @param id 交易ID
    * @returns 交易对象
    */
-  async getById(id: string): Promise<Transaction | null> {
+  async getById(userId: string, id: string): Promise<Transaction | null> {
     const adapter = this.dbManager.getAdapter();
-    const result = await adapter.get('SELECT * FROM transactions WHERE id = ?', [id]);
+    const result = await adapter.get('SELECT * FROM transactions WHERE id = ? AND userId = ?', [id, userId]);
     return result ? this.mapToTransaction(result) : null;
   }
 
   /**
    * 创建交易
+   * @param userId 用户ID
    * @param transaction 交易对象
    * @returns 创建的交易对象
    */
-  async create(transaction: Omit<Transaction, 'id' | 'createdAt'>): Promise<Transaction> {
+  async create(userId: string, transaction: Omit<Transaction, 'id' | 'createdAt'>): Promise<Transaction> {
     const adapter = this.dbManager.getAdapter();
     const now = new Date().toISOString();
     const id = `transaction_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
     await adapter.run(
       `INSERT INTO transactions (
-        id, type, fromAssetId, toAssetId, amount, currency, 
+        id, userId, type, fromAssetId, toAssetId, amount, currency, 
         fee, date, notes, createdAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id, transaction.type, transaction.fromAssetId, transaction.toAssetId, 
+        id, userId, transaction.type, transaction.fromAssetId, transaction.toAssetId, 
         transaction.amount, transaction.currency, transaction.fee, 
         transaction.date, transaction.notes, now
       ]
     );
 
-    return this.getById(id);
+    return this.getById(userId, id) as Promise<Transaction>;
   }
 
   /**
    * 删除交易
+   * @param userId 用户ID
    * @param id 交易ID
    * @returns 是否删除成功
    */
-  async delete(id: string): Promise<boolean> {
+  async delete(userId: string, id: string): Promise<boolean> {
     const adapter = this.dbManager.getAdapter();
-    await adapter.run('DELETE FROM transactions WHERE id = ?', [id]);
+    await adapter.run('DELETE FROM transactions WHERE id = ? AND userId = ?', [id, userId]);
     return true;
   }
 

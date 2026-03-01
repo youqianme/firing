@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useUser } from '../context/UserContext';
 import { Currency } from './types';
 
 export default function MarketDataPage() {
+  const { userId } = useUser();
   const [marketData, setMarketData] = useState({
     usdToCny: 7.20,
     hkdToCny: 0.92,
@@ -14,14 +16,18 @@ export default function MarketDataPage() {
 
   // 加载市场数据
   useEffect(() => {
-    loadMarketData();
-  }, []);
+    if (userId) {
+      loadMarketData();
+    }
+  }, [userId]);
 
   // 加载市场数据
   async function loadMarketData() {
     try {
       // 通过 API 获取市场数据
-      const response = await fetch('/api/market-data');
+      const response = await fetch('/api/market-data', {
+        headers: { 'x-user-id': userId }
+      });
       const data = await response.json();
       setMarketData(data);
     } catch (error) {
@@ -43,6 +49,7 @@ export default function MarketDataPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-user-id': userId
         },
         body: JSON.stringify(marketData),
       });

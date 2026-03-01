@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useUser } from '../context/UserContext';
 import { AccountType, Currency, type Account } from './types';
 
 export default function AccountsPage() {
+  const { userId } = useUser();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -17,15 +19,21 @@ export default function AccountsPage() {
 
   // 加载账户数据
   useEffect(() => {
-    loadAccounts();
-  }, []);
+    if (userId) {
+      loadAccounts();
+    }
+  }, [userId]);
 
   // 加载账户数据
   async function loadAccounts() {
     try {
-      const response = await fetch('/api/accounts');
+      const response = await fetch('/api/accounts', {
+        headers: {
+          'x-user-id': userId
+        }
+      });
       const loadedAccounts = await response.json();
-      setAccounts(loadedAccounts);
+      setAccounts(Array.isArray(loadedAccounts) ? loadedAccounts : []);
     } catch (error) {
       console.error('Failed to load accounts:', error);
     }
@@ -88,6 +96,7 @@ export default function AccountsPage() {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
+            'x-user-id': userId
           },
           body: JSON.stringify(accountData),
         });
@@ -108,6 +117,7 @@ export default function AccountsPage() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-user-id': userId
           },
           body: JSON.stringify(accountData),
         });
@@ -137,6 +147,9 @@ export default function AccountsPage() {
       try {
         const response = await fetch(`/api/accounts/${id}`, {
           method: 'DELETE',
+          headers: {
+            'x-user-id': userId
+          }
         });
 
         if (response.ok) {

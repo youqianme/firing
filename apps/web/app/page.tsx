@@ -2,11 +2,13 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { Area, AreaChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useUser } from './context/UserContext';
 import { convertCurrency, formatCurrency, Currency } from '@firing/utils';
 import { formatDate } from '@firing/utils';
 import { Asset, Liability, Activity, FireConfig } from '@firing/types';
 
 export default function Home() {
+  const { userId } = useUser();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [liabilities, setLiabilities] = useState<Liability[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -42,6 +44,8 @@ export default function Home() {
 
   // 加载数据
   useEffect(() => {
+    if (!userId) return;
+
     const controller = new AbortController();
     const signal = controller.signal;
 
@@ -53,12 +57,14 @@ export default function Home() {
         const baseCurrency: Currency = 'CNY';
         setBaseCurrency(baseCurrency);
 
+        const headers = { 'x-user-id': userId };
+
         // 获取资产和负债
         const [assetsResponse, liabilitiesResponse, activitiesResponse, fireConfigResponse] = await Promise.all([
-          fetch('/api/assets', { signal }),
-          fetch('/api/liabilities', { signal }),
-          fetch('/api/activity', { signal }),
-          fetch('/api/fire', { signal })
+          fetch('/api/assets', { signal, headers }),
+          fetch('/api/liabilities', { signal, headers }),
+          fetch('/api/activity', { signal, headers }),
+          fetch('/api/fire', { signal, headers })
         ]);
 
         const loadedAssets = await assetsResponse.json();
@@ -66,14 +72,18 @@ export default function Home() {
         const loadedActivities = await activitiesResponse.json();
         const loadedFireConfig = await fireConfigResponse.json();
 
+        const safeAssets = Array.isArray(loadedAssets) ? loadedAssets : [];
+        const safeLiabilities = Array.isArray(loadedLiabilities) ? loadedLiabilities : [];
+        const safeActivities = Array.isArray(loadedActivities) ? loadedActivities : [];
+
         if (!signal.aborted) {
-          setAssets(loadedAssets);
-          setLiabilities(loadedLiabilities);
-          setActivities(loadedActivities);
+          setAssets(safeAssets);
+          setLiabilities(safeLiabilities);
+          setActivities(safeActivities);
           setFireConfig(loadedFireConfig);
 
           // 计算核心指标
-          calculateMetrics(loadedAssets, loadedLiabilities, baseCurrency);
+          calculateMetrics(safeAssets, safeLiabilities, baseCurrency);
         }
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
@@ -92,7 +102,7 @@ export default function Home() {
     return () => {
       controller.abort();
     };
-  }, []);
+  }, [userId]);
 
   // 计算核心指标
   function calculateMetrics(assets: Asset[], liabilities: Liability[], currency: Currency) {

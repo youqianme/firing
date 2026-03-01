@@ -15,12 +15,28 @@ export class NeonDatabaseAdapter implements DatabaseAdapter {
 
   /**
    * 将 SQLite 风格的 SQL (使用 ?) 转换为 Postgres 风格 (使用 $1, $2...)
+   * 同时为大小写敏感的标识符添加引号
    */
   private convertSql(sql: string): string {
     let index = 1;
-    // 简单的替换，假设 SQL 字符串中不包含字面量 '?'
-    // 对于更复杂的情况，可能需要更健壮的解析器
-    return sql.replace(/\?/g, () => `$${index++}`);
+    
+    // 第一步：为所有包含大写字母的单词标识符添加双引号
+    // 使用更全面的正则表达式，匹配所有包含大写字母的单词
+    let converted = sql.replace(/\b([a-z]+[A-Z][a-zA-Z0-9]*)\b/g, (match) => {
+      // 避免为 SQL 关键字添加引号
+      const sqlKeywords = ['SELECT', 'FROM', 'WHERE', 'AND', 'OR', 'INSERT', 'INTO', 'VALUES', 'UPDATE', 'SET', 'DELETE', 'ORDER', 'BY', 'ASC', 'DESC', 'LIMIT', 'OFFSET', 'JOIN', 'LEFT', 'RIGHT', 'INNER', 'OUTER', 'ON', 'GROUP', 'HAVING', 'COUNT', 'SUM', 'AVG', 'MAX', 'MIN', 'DISTINCT', 'NULL', 'NOT', 'IN', 'LIKE', 'BETWEEN', 'IS', 'DEFAULT', 'PRIMARY', 'KEY', 'FOREIGN', 'REFERENCES', 'CASCADE', 'CREATE', 'TABLE', 'IF', 'EXISTS', 'TEXT', 'DOUBLE', 'PRECISION', 'INTEGER', 'NOT', 'BEGIN', 'COMMIT', 'ROLLBACK', 'ALTER', 'ADD', 'COLUMN'];
+      
+      if (sqlKeywords.includes(match.toUpperCase())) {
+        return match;
+      }
+      
+      return `"${match}"`;
+    });
+    
+    // 第二步：将参数占位符 ? 替换为 $1, $2...
+    converted = converted.replace(/\?/g, () => `$${index++}`);
+    
+    return converted;
   }
 
   /**

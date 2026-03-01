@@ -13,63 +13,67 @@ export class AssetRepository {
 
   /**
    * 获取所有资产
+   * @param userId 用户ID
    * @returns 资产列表
    */
-  async getAll(): Promise<Asset[]> {
+  async getAll(userId: string): Promise<Asset[]> {
     const adapter = this.dbManager.getAdapter();
-    const result = await adapter.execute('SELECT * FROM assets ORDER BY createdAt DESC');
+    const result = await adapter.execute('SELECT * FROM assets WHERE userId = ? ORDER BY createdAt DESC', [userId]);
     return result.map(this.mapToAsset);
   }
 
   /**
    * 根据ID获取资产
+   * @param userId 用户ID
    * @param id 资产ID
    * @returns 资产对象
    */
-  async getById(id: string): Promise<Asset | null> {
+  async getById(userId: string, id: string): Promise<Asset | null> {
     const adapter = this.dbManager.getAdapter();
-    const result = await adapter.get('SELECT * FROM assets WHERE id = ?', [id]);
+    const result = await adapter.get('SELECT * FROM assets WHERE id = ? AND userId = ?', [id, userId]);
     return result ? this.mapToAsset(result) : null;
   }
 
   /**
    * 创建资产
+   * @param userId 用户ID
    * @param asset 资产对象
    * @returns 创建的资产对象
    */
-  async create(asset: Omit<Asset, 'id' | 'createdAt' | 'updatedAt'>): Promise<Asset> {
+  async create(userId: string, asset: Omit<Asset, 'id' | 'createdAt' | 'updatedAt'>): Promise<Asset> {
     const adapter = this.dbManager.getAdapter();
     const now = new Date().toISOString();
     const id = `asset_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
     await adapter.run(
       `INSERT INTO assets (
-        id, name, type, currency, amount, includeInFire, accountId, 
+        id, userId, name, type, currency, amount, includeInFire, accountId, 
         quantity, unitPrice, interestRate, startDate, endDate, 
         valuationMethod, updatedAt, createdAt, notes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id, asset.name, asset.type, asset.currency, asset.amount, 
+        id, userId, asset.name, asset.type, asset.currency, asset.amount, 
         asset.includeInFire ? 1 : 0, asset.accountId, asset.quantity, 
         asset.unitPrice, asset.interestRate, asset.startDate, asset.endDate, 
         asset.valuationMethod, now, now, asset.notes
       ]
     );
 
-    return this.getById(id);
+    return this.getById(userId, id) as Promise<Asset>;
   }
 
   /**
    * 更新资产
+   * @param userId 用户ID
    * @param id 资产ID
    * @param asset 资产对象
    * @returns 更新后的资产对象
    */
-  async update(id: string, asset: Partial<Asset>): Promise<Asset | null> {
+  async update(userId: string, id: string, asset: Partial<Asset>): Promise<Asset | null> {
     const adapter = this.dbManager.getAdapter();
     const now = new Date().toISOString();
 
-    const existingAsset = await this.getById(id);
+    const existingAsset = await this.getById(userId, id);
     if (!existingAsset) {
       return null;
     }
@@ -81,37 +85,39 @@ export class AssetRepository {
         name = ?, type = ?, currency = ?, amount = ?, includeInFire = ?, 
         accountId = ?, quantity = ?, unitPrice = ?, interestRate = ?, 
         startDate = ?, endDate = ?, valuationMethod = ?, updatedAt = ?, notes = ? 
-      WHERE id = ?`,
+      WHERE id = ? AND userId = ?`,
       [
         updatedAsset.name, updatedAsset.type, updatedAsset.currency, 
         updatedAsset.amount, updatedAsset.includeInFire ? 1 : 0, 
         updatedAsset.accountId, updatedAsset.quantity, updatedAsset.unitPrice, 
         updatedAsset.interestRate, updatedAsset.startDate, updatedAsset.endDate, 
-        updatedAsset.valuationMethod, now, updatedAsset.notes, id
+        updatedAsset.valuationMethod, now, updatedAsset.notes, id, userId
       ]
     );
 
-    return this.getById(id);
+    return this.getById(userId, id);
   }
 
   /**
    * 删除资产
+   * @param userId 用户ID
    * @param id 资产ID
    * @returns 是否删除成功
    */
-  async delete(id: string): Promise<boolean> {
+  async delete(userId: string, id: string): Promise<boolean> {
     const adapter = this.dbManager.getAdapter();
-    await adapter.run('DELETE FROM assets WHERE id = ?', [id]);
+    await adapter.run('DELETE FROM assets WHERE id = ? AND userId = ?', [id, userId]);
     return true;
   }
 
   /**
    * 获取包含在FIRE计算中的资产
+   * @param userId 用户ID
    * @returns 资产列表
    */
-  async getFireAssets(): Promise<Asset[]> {
+  async getFireAssets(userId: string): Promise<Asset[]> {
     const adapter = this.dbManager.getAdapter();
-    const result = await adapter.execute('SELECT * FROM assets WHERE includeInFire = 1 ORDER BY createdAt DESC');
+    const result = await adapter.execute('SELECT * FROM assets WHERE includeInFire = 1 AND userId = ? ORDER BY createdAt DESC', [userId]);
     return result.map(this.mapToAsset);
   }
 

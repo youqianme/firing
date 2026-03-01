@@ -1,13 +1,14 @@
-import { initializeDatabase } from '../../../lib/database';
+import { dbManager, initializeDatabase } from '../../../lib/database';
 import { userSettingsRepository, assetRepository, liabilityRepository, transactionRepository, activityRepository, fireConfigRepository } from '../../../lib/dataAccess';
 
 // 初始化数据库
 initializeDatabase();
 
-export async function GET() {
+export async function GET(request: Request) {
+  const userId = request.headers.get('x-user-id') || 'demo';
   try {
     // 获取用户设置
-    const settings = await userSettingsRepository.get();
+    const settings = await userSettingsRepository.get(userId);
     
     return new Response(JSON.stringify(settings), {
       status: 200,
@@ -27,11 +28,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const userId = request.headers.get('x-user-id') || 'demo';
   try {
     const data = await request.json();
     
     // 保存用户设置
-    const updatedSettings = await userSettingsRepository.update(data);
+    const updatedSettings = await userSettingsRepository.update(userId, data);
     
     return new Response(JSON.stringify(updatedSettings), {
       status: 200,
@@ -50,23 +52,37 @@ export async function POST(request: Request) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
+  const userId = request.headers.get('x-user-id') || 'demo';
   try {
-    // 清空所有数据（危险操作）
-    const { dbManager } = require('../../../lib/database');
+    // 确保数据库已初始化
+    await initializeDatabase();
+
+    // 清空当前用户的所有数据（危险操作）
     const adapter = dbManager.getAdapter();
     
-    // 按照依赖关系删除数据
-    await adapter.run('DELETE FROM payments');
-    await adapter.run('DELETE FROM transactions');
-    await adapter.run('DELETE FROM activities');
-    await adapter.run('DELETE FROM assets');
-    await adapter.run('DELETE FROM liabilities');
-    await adapter.run('DELETE FROM accounts');
-    await adapter.run('DELETE FROM marketData');
-    await adapter.run('DELETE FROM fireConfig');
-    
-    // 保留用户设置
+    // 按照依赖关系删除数据，仅删除当前用户的数据
+    // 和 /api/demo/reset 保持一致的删除顺序
+    const tables = [
+      'payments', 
+      'transactions', 
+      'activities', 
+      'marketData', 
+      'assets', 
+      'liabilities', 
+      'accounts', 
+      'fireConfig', 
+      'userSettings'
+    ];
+
+    for (const table of tables) {
+      try {
+        await adapter.run(`DELETE FROM ${table} WHERE userId = ?`, [userId]);
+      } catch (e) {
+        console.warn(`Failed to delete from ${table}:`, e);
+        // Continue with other tables
+      }
+    }
     
     return new Response(JSON.stringify({ message: 'All data cleared successfully' }), {
       status: 200,

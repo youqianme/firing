@@ -45,6 +45,7 @@ export class DatabaseManager {
       await this.adapter.run(`
         CREATE TABLE IF NOT EXISTS assets (
           id TEXT PRIMARY KEY,
+          userId TEXT NOT NULL DEFAULT 'default',
           name TEXT NOT NULL,
           type TEXT NOT NULL,
           currency TEXT NOT NULL,
@@ -67,6 +68,7 @@ export class DatabaseManager {
       await this.adapter.run(`
         CREATE TABLE IF NOT EXISTS liabilities (
           id TEXT PRIMARY KEY,
+          userId TEXT NOT NULL DEFAULT 'default',
           name TEXT NOT NULL,
           type TEXT NOT NULL,
           currency TEXT NOT NULL,
@@ -84,6 +86,7 @@ export class DatabaseManager {
       await this.adapter.run(`
         CREATE TABLE IF NOT EXISTS payments (
           id TEXT PRIMARY KEY,
+          userId TEXT NOT NULL DEFAULT 'default',
           liabilityId TEXT NOT NULL,
           amount DOUBLE PRECISION NOT NULL,
           date TEXT NOT NULL,
@@ -97,6 +100,7 @@ export class DatabaseManager {
       await this.adapter.run(`
         CREATE TABLE IF NOT EXISTS transactions (
           id TEXT PRIMARY KEY,
+          userId TEXT NOT NULL DEFAULT 'default',
           type TEXT NOT NULL,
           fromAssetId TEXT,
           toAssetId TEXT,
@@ -115,6 +119,7 @@ export class DatabaseManager {
       await this.adapter.run(`
         CREATE TABLE IF NOT EXISTS accounts (
           id TEXT PRIMARY KEY,
+          userId TEXT NOT NULL DEFAULT 'default',
           name TEXT NOT NULL,
           type TEXT NOT NULL,
           currency TEXT,
@@ -138,6 +143,7 @@ export class DatabaseManager {
       await this.adapter.run(`
         CREATE TABLE IF NOT EXISTS activities (
           id TEXT PRIMARY KEY,
+          userId TEXT NOT NULL DEFAULT 'default',
           action TEXT NOT NULL,
           objectType TEXT NOT NULL,
           objectId TEXT NOT NULL,
@@ -194,9 +200,27 @@ export class DatabaseManager {
       }
 
       await this.adapter.commit();
+
+      // 检查并添加 userId 列（针对旧数据库迁移）
+      try {
+        await this.ensureUserIdColumn('assets');
+        await this.ensureUserIdColumn('liabilities');
+        await this.ensureUserIdColumn('payments');
+        await this.ensureUserIdColumn('transactions');
+        await this.ensureUserIdColumn('accounts');
+        await this.ensureUserIdColumn('activities');
+      } catch (error) {
+        console.error('Database migration failed:', error);
+        throw error;
+      }
+
       this.isInitialized = true;
     } catch (error) {
-      await this.adapter.rollback();
+      try {
+        await this.adapter.rollback();
+      } catch (e) {
+        // Ignore rollback error if transaction was already committed or not started
+      }
       throw error;
     } finally {
       this.initializationPromise = null;
@@ -204,6 +228,25 @@ export class DatabaseManager {
     })();
 
     return this.initializationPromise;
+  }
+
+  /**
+   * 确保表中存在 userId 列
+   * @param tableName 表名
+   */
+  private async ensureUserIdColumn(tableName: string): Promise<void> {
+    try {
+      // 尝试查询 userId 列，如果不存在会抛出异常
+      await this.adapter.execute(`SELECT userId FROM ${tableName} LIMIT 1`);
+    } catch (error) {
+      // 如果查询失败，尝试添加列
+      console.log(`Adding userId column to ${tableName}`);
+      try {
+        await this.adapter.run(`ALTER TABLE ${tableName} ADD COLUMN userId TEXT NOT NULL DEFAULT 'default'`);
+      } catch (e) {
+        console.warn(`Failed to add userId column to ${tableName}. It might already exist.`, e);
+      }
+    }
   }
 
   /**

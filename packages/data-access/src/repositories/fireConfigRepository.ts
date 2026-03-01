@@ -12,25 +12,27 @@ export class FireConfigRepository {
   }
 
   /**
-   * 获取默认FIRE配置
+   * 获取FIRE配置
+   * @param userId 用户ID
    * @returns FIRE配置对象
    */
-  async getDefault(): Promise<FireConfig | null> {
+  async get(userId: string): Promise<FireConfig | null> {
     const adapter = this.dbManager.getAdapter();
-    const result = await adapter.get('SELECT * FROM fireConfig WHERE id = ?', ['default']);
+    const result = await adapter.get('SELECT * FROM fireConfig WHERE id = ?', [userId]);
     return result ? this.mapToFireConfig(result) : null;
   }
 
   /**
    * 更新FIRE配置
+   * @param userId 用户ID
    * @param config FIRE配置对象
    * @returns 更新后的FIRE配置对象
    */
-  async update(config: Partial<FireConfig>): Promise<FireConfig | null> {
+  async update(userId: string, config: Partial<FireConfig>): Promise<FireConfig | null> {
     const adapter = this.dbManager.getAdapter();
     const now = new Date().toISOString();
 
-    const existingConfig = await this.getDefault();
+    const existingConfig = await this.get(userId);
     if (!existingConfig) {
       return null;
     }
@@ -39,10 +41,10 @@ export class FireConfigRepository {
 
     await adapter.run(
       'UPDATE fireConfig SET annualExpense = ?, swr = ?, updatedAt = ? WHERE id = ?',
-      [updatedConfig.annualExpense, updatedConfig.swr, now, 'default']
+      [updatedConfig.annualExpense, updatedConfig.swr, now, userId]
     );
 
-    return this.getDefault();
+    return this.get(userId);
   }
 
   /**

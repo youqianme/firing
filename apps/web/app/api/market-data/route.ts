@@ -4,7 +4,7 @@ import { marketDataRepository } from '../../../lib/dataAccess';
 // 初始化数据库
 initializeDatabase();
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     // 获取所有市场数据
     const allMarketData = await marketDataRepository.getAll();

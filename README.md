@@ -19,11 +19,9 @@ firing/
   ├── config/               (配置文件)
   │   ├── .env.example      (环境变量示例)
   │   └── .env.production   (生产环境配置)
-  ├── deploy/               (部署脚本)
   ├── doc/                  (项目文档)
   ├── package.json          (根配置：Workspaces 与脚本)
-  ├── docker-compose.yml    (Docker 配置)
-  └── Dockerfile            (Docker 构建文件)
+  └── vercel.json           (Vercel 部署配置)
 ```
 
 ## 🚀 快速开始
@@ -32,7 +30,6 @@ firing/
 
 - Node.js 18+
 - npm 9+
-- Docker (可选，用于容器化部署)
 
 ### 2. 安装依赖
 
@@ -206,7 +203,13 @@ npm run build:mobile
 - 本地数据持久化（SQLite）
 - 跨平台数据一致性
 
-### 6. 测试数据生成
+### 6. 游客账户系统
+- **零注册体验**：无需注册即可使用完整功能
+- **数据隔离**：每个设备拥有独立的游客账户
+- **一键重置**：支持清空数据或重新填充演示数据
+- **无缝升级**：未来可无缝升级为正式注册用户
+
+### 7. 测试数据生成
 - 一键生成覆盖所有功能的测试数据
 - 包含账户、资产、负债、交易等多种数据类型
 - 符合常规业务逻辑的真实数据
@@ -235,6 +238,8 @@ npm run build:mobile
 - [产品需求文档](./doc/PRD.md)
 - [UI 设计文档](./doc/UI_Description.md)
 - [用户故事与测试用例](./doc/UserStoriesAndTestCases.md)
+- [游客账户系统实现文档](./doc/GUEST_ACCOUNT_SYSTEM.md) - 详细记录游客账户系统的完整实现
+- [数据库设计文档](./doc/DATABASE_DESIGN.md) - 完整的数据库架构和表结构设计
 
 ## 🚢 部署说明
 
@@ -259,43 +264,6 @@ npm run build:mobile
         *   `TURSO_AUTH_TOKEN`: LibSQL/Turso 认证 Token
     *   **注意**：如果不配置上述变量，将默认使用本地 SQLite 文件数据库。在 Vercel 等 Serverless 环境中，本地文件是临时的，重新部署后数据会丢失。强烈建议配置 Neon 或 Turso 以实现数据持久化。
 5.  点击 Deploy。
-
-### Docker 部署
-
-#### 使用部署脚本（推荐）
-
-项目提供了完整的部署脚本，位于 `deploy/` 目录：
-
-```bash
-# 构建镜像
-./deploy/build.sh
-
-# 启动容器
-./deploy/start.sh
-
-# 停止容器
-./deploy/stop.sh
-
-# 重启容器
-./deploy/restart.sh
-
-# 查看日志
-./deploy/logs.sh
-```
-
-#### 部署脚本说明
-
-- **build.sh**：构建所有服务的 Docker 镜像
-- **start.sh**：启动所有服务的容器
-- **stop.sh**：停止所有服务的容器
-- **restart.sh**：先停止所有服务，然后重新启动它们
-- **logs.sh**：查看容器日志，支持选择查看开发环境、生产环境或所有服务的日志
-
-#### 访问应用
-
-启动后，应用会在以下地址可用：
-- 开发环境: http://localhost:3000
-- 生产环境: http://localhost:3001
 
 ## 🤝 贡献指南
 

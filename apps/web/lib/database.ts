@@ -1,9 +1,6 @@
 import { DatabaseManager, DatabaseAdapter } from '@firing/data-access';
-// import { WebDatabaseAdapter } from './database-adapter'; // 移除静态导入，改为动态导入
 import { LibsqlDatabaseAdapter } from './libsql-adapter';
 import { NeonDatabaseAdapter } from './neon-adapter';
-import path from 'path';
-import fs from 'fs';
 
 // 全局单例缓存，防止热重载时重复创建连接
 let adapter: DatabaseAdapter;
@@ -11,7 +8,7 @@ let dbManager: DatabaseManager;
 
 // @ts-ignore
 if (!global.dbManager) {
-  // 1. 检查是否配置了 Neon / Postgres 环境变量 (Vercel Postgres)
+  // 1. 优先使用 Neon / Postgres (默认选项)
   if (process.env.POSTGRES_URL || process.env.NEON_DATABASE_URL) {
     const connectionString = process.env.POSTGRES_URL || process.env.NEON_DATABASE_URL || '';
     console.log('Using Neon (Postgres) database adapter');
@@ -24,22 +21,9 @@ if (!global.dbManager) {
     console.log('Using LibSQL/Turso database adapter');
     adapter = new LibsqlDatabaseAdapter(url, authToken);
   } 
-  // 3. 默认使用本地 SQLite
+  // 3. 如果都没有配置，抛出错误
   else {
-    // 数据库路径
-    const DB_PATH = process.env.DATABASE_URL || path.join(process.cwd(), 'dev.db');
-    
-    // 确保数据库目录存在
-    const dbDir = path.dirname(DB_PATH);
-    if (!fs.existsSync(dbDir)) {
-      fs.mkdirSync(dbDir, { recursive: true });
-    }
-
-    console.log('Using local SQLite database adapter');
-    // 动态导入 WebDatabaseAdapter，避免在 Vercel 环境中加载 better-sqlite3
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { WebDatabaseAdapter } = require('./database-adapter');
-    adapter = new WebDatabaseAdapter(DB_PATH);
+    throw new Error('No database configuration found. Please set POSTGRES_URL or NEON_DATABASE_URL or TURSO_DATABASE_URL');
   }
 
   // 创建数据库管理器
