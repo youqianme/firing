@@ -1,0 +1,9 @@
+- [x] SidebarContext 已创建，提供 isCollapsed 状态和 toggleSidebar 方法
+- [x] Sidebar 组件已创建，支持折叠和展开
+- [x] 折叠状态侧边栏宽度为 64px，只显示图标
+- [x] 展开状态侧边栏宽度为 256px，显示完整菜单
+- [x] 平滑过渡动画已实现
+- [x] DemoBanner 根据侧边栏状态自动调整位置
+- [x] 窗口大小变化时位置也会相应调整
+- [x] layout.tsx 已集成 SidebarProvider 和 Sidebar 组件
+- [x] 构建成功通过

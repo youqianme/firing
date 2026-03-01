@@ -78,8 +78,10 @@ Web 端的核心页面和 API 路由目录。
   - `transactions/`: 交易/转账（Ledger）API（含 `[id]` 动态路由）。
 - **`components/`**: 共享组件。
   - `DemoBanner.tsx`: 游客模式提示条组件。
+  - `Sidebar.tsx`: 可折叠侧边栏组件。
 - **`context/`**: React上下文。
   - `UserContext.tsx`: 用户状态管理（游客账户核心逻辑）。
+  - `SidebarContext.tsx`: 侧边栏折叠状态管理。
 - **`activity/`**: 时间轴页面。
 - **`assets/`**: 资产管理页面。
 - **`earnings/`**: 收益日历页面。

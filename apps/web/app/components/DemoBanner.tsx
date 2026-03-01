@@ -1,11 +1,36 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useUser } from '../context/UserContext';
+import { useSidebar } from '../context/SidebarContext';
 
 export function DemoBanner() {
   const { isDemo, resetDemo, clearData, register } = useUser();
+  const { isCollapsed } = useSidebar();
   const [isLoading, setIsLoading] = useState(false);
+  const [leftOffset, setLeftOffset] = useState('0px');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (window.innerWidth >= 768) {
+        setLeftOffset(isCollapsed ? '64px' : '256px');
+      } else {
+        setLeftOffset('0px');
+      }
+    }
+  }, [isCollapsed]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setLeftOffset(isCollapsed ? '64px' : '256px');
+      } else {
+        setLeftOffset('0px');
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isCollapsed]);
 
   if (!isDemo) return null;
 
@@ -52,7 +77,10 @@ export function DemoBanner() {
           </div>
         </div>
       )}
-      <div className="fixed bottom-0 left-0 right-0 bg-yellow-100 border-t border-yellow-200 text-yellow-800 px-4 py-3 z-50">
+      <div 
+        className="fixed bottom-0 right-0 bg-yellow-100 border-t border-yellow-200 text-yellow-800 px-4 py-3 z-15 transition-all duration-300"
+        style={{ left: leftOffset }}
+      >
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center">
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
