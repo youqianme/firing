@@ -50,9 +50,10 @@ export default function EarningsPage() {
         headers: { 'x-user-id': userId }
       });
       const data = await response.json();
+      const safeData = Array.isArray(data) ? data : [];
       
       // 转换日期格式
-      const formattedData = data.map((item: any) => ({
+      const formattedData = safeData.map((item: any) => ({
         date: new Date(item.date),
         total: item.total,
         activity: item.activity,

@@ -20,9 +20,18 @@ export class NeonDatabaseAdapter implements DatabaseAdapter {
   private convertSql(sql: string): string {
     let index = 1;
     
-    // 第一步：为包含大小写字母的标识符（如 userId）添加双引号
-    // 匹配常见的列名和表名：包含大小写字母的单词
-    let converted = sql.replace(/\b(userId|accountId|includeInFire|unitPrice|interestRate|startDate|endDate|valuationMethod|updatedAt|createdAt|fromAssetId|toAssetId|baseCurrency|privacyMode|objectType|objectId|objectName|oldAmount)\b/g, '"$1"');
+    // 第一步：为所有包含大写字母的单词标识符添加双引号
+    // 使用更全面的正则表达式，匹配所有包含大写字母的单词
+    let converted = sql.replace(/\b([a-z]+[A-Z][a-zA-Z0-9]*)\b/g, (match) => {
+      // 避免为 SQL 关键字添加引号
+      const sqlKeywords = ['SELECT', 'FROM', 'WHERE', 'AND', 'OR', 'INSERT', 'INTO', 'VALUES', 'UPDATE', 'SET', 'DELETE', 'ORDER', 'BY', 'ASC', 'DESC', 'LIMIT', 'OFFSET', 'JOIN', 'LEFT', 'RIGHT', 'INNER', 'OUTER', 'ON', 'GROUP', 'HAVING', 'COUNT', 'SUM', 'AVG', 'MAX', 'MIN', 'DISTINCT', 'NULL', 'NOT', 'IN', 'LIKE', 'BETWEEN', 'IS', 'DEFAULT', 'PRIMARY', 'KEY', 'FOREIGN', 'REFERENCES', 'CASCADE', 'CREATE', 'TABLE', 'IF', 'EXISTS', 'TEXT', 'DOUBLE', 'PRECISION', 'INTEGER', 'NOT', 'BEGIN', 'COMMIT', 'ROLLBACK', 'ALTER', 'ADD', 'COLUMN'];
+      
+      if (sqlKeywords.includes(match.toUpperCase())) {
+        return match;
+      }
+      
+      return `"${match}"`;
+    });
     
     // 第二步：将参数占位符 ? 替换为 $1, $2...
     converted = converted.replace(/\?/g, () => `$${index++}`);

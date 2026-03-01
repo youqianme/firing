@@ -42,8 +42,8 @@ export default function TransactionsPage() {
         const loadedAssets = await assetsResponse.json();
 
         if (!signal.aborted) {
-          setTransactions(loadedTransactions);
-          setAssets(loadedAssets);
+          setTransactions(Array.isArray(loadedTransactions) ? loadedTransactions : []);
+          setAssets(Array.isArray(loadedAssets) ? loadedAssets : []);
         }
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
@@ -129,8 +129,8 @@ export default function TransactionsPage() {
         const { transaction, updatedFromAsset, updatedToAsset } = result;
 
         // 更新列表
-        setTransactions(prev => [transaction, ...prev]);
-        setAssets(prev => prev.map(a => 
+        setTransactions(prev => [transaction, ...(Array.isArray(prev) ? prev : [])]);
+        setAssets(prev => (Array.isArray(prev) ? prev : []).map(a => 
           a.id === updatedFromAsset.id ? updatedFromAsset :
           a.id === updatedToAsset.id ? updatedToAsset : a
         ));
@@ -192,8 +192,8 @@ export default function TransactionsPage() {
         const { transaction, updatedCashAsset, deletedAssetId } = result;
 
         // 更新列表
-        setTransactions(prev => [transaction, ...prev]);
-        setAssets(prev => prev
+        setTransactions(prev => [transaction, ...(Array.isArray(prev) ? prev : [])]);
+        setAssets(prev => (Array.isArray(prev) ? prev : [])
           .filter(a => a.id !== deletedAssetId)
           .map(a => a.id === updatedCashAsset.id ? updatedCashAsset : a)
         );
@@ -233,7 +233,7 @@ export default function TransactionsPage() {
             headers: { 'x-user-id': userId }
           });
           const loadedAssets = await assetsResponse.json();
-          setAssets(loadedAssets);
+          setAssets(Array.isArray(loadedAssets) ? loadedAssets : []);
         }
       } catch (error) {
         console.error('Failed to delete transaction:', error);
@@ -264,12 +264,12 @@ export default function TransactionsPage() {
 
   // 获取现金资产列表
   function getCashAssets(): Asset[] {
-    return assets.filter(a => a.type === AssetType.CASH);
+    return Array.isArray(assets) ? assets.filter(a => a.type === AssetType.CASH) : [];
   }
 
   // 获取定期存款资产列表
   function getTimeDepositAssets(): Asset[] {
-    return assets.filter(a => a.type === AssetType.TIME_DEPOSIT || a.type === AssetType.TIME_DEPOSIT_ALT);
+    return Array.isArray(assets) ? assets.filter(a => a.type === AssetType.TIME_DEPOSIT || a.type === AssetType.TIME_DEPOSIT_ALT) : [];
   }
 
   if (isLoading) {
@@ -295,7 +295,7 @@ export default function TransactionsPage() {
                 headers: { 'x-user-id': userId }
               });
               const loadedAssets = await assetsResponse.json();
-              setAssets(loadedAssets);
+              setAssets(Array.isArray(loadedAssets) ? loadedAssets : []);
             }}
             className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg font-medium hover:bg-slate-50 transition-colors"
           >

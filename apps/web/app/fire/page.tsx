@@ -44,7 +44,7 @@ export default function FirePage() {
       // 通过 API 获取资产
       const assetsResponse = await fetch('/api/assets', { headers });
       const loadedAssets = await assetsResponse.json();
-      setAssets(loadedAssets);
+      setAssets(Array.isArray(loadedAssets) ? loadedAssets : []);
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
@@ -106,7 +106,8 @@ export default function FirePage() {
   // 计算当前 FIRE 资产
   function calculateCurrentFireAssets(): number {
     let total = 0;
-    for (const asset of assets) {
+    const safeAssets = Array.isArray(assets) ? assets : [];
+    for (const asset of safeAssets) {
       if (asset.includeInFire) {
         total += asset.amount;
       }
@@ -131,12 +132,14 @@ export default function FirePage() {
 
   // 获取计入 FIRE 的资产列表
   function getFireIncludedAssets(): any[] {
-    return assets.filter(asset => asset.includeInFire);
+    const safeAssets = Array.isArray(assets) ? assets : [];
+    return safeAssets.filter(asset => asset.includeInFire);
   }
 
   // 获取未计入 FIRE 的资产列表
   function getFireExcludedAssets(): any[] {
-    return assets.filter(asset => !asset.includeInFire);
+    const safeAssets = Array.isArray(assets) ? assets : [];
+    return safeAssets.filter(asset => !asset.includeInFire);
   }
 
   if (isLoading) {

@@ -417,9 +417,9 @@ export const accountRepository = {
 // 市场数据相关操作
 export const marketDataRepository = {
   // 获取所有市场数据
-  getAll: async (userId: string): Promise<MarketData[]> => {
+  getAll: async (): Promise<MarketData[]> => {
     const adapter = getAdapter();
-    const rows = await adapter.execute('SELECT * FROM marketData WHERE userId = ? ORDER BY symbol', [userId]);
+    const rows = await adapter.execute('SELECT * FROM marketData ORDER BY symbol', []);
     return rows.map(row => ({
       ...row,
       updatedAt: getProp(row, 'updatedAt')
@@ -427,9 +427,9 @@ export const marketDataRepository = {
   },
 
   // 根据符号获取市场数据
-  getBySymbol: async (userId: string, symbol: string): Promise<MarketData | undefined> => {
+  getBySymbol: async (symbol: string): Promise<MarketData | undefined> => {
     const adapter = getAdapter();
-    const row = await adapter.get('SELECT * FROM marketData WHERE symbol = ? AND userId = ?', [symbol, userId]);
+    const row = await adapter.get('SELECT * FROM marketData WHERE symbol = ?', [symbol]);
     if (!row) return undefined;
     return {
       ...row,
@@ -438,15 +438,15 @@ export const marketDataRepository = {
   },
 
   // 创建或更新市场数据
-  upsert: async (userId: string, symbol: string, price: number, source: 'MANUAL' | 'AUTO' = 'MANUAL'): Promise<MarketData> => {
-    const existing = await marketDataRepository.getBySymbol(userId, symbol);
+  upsert: async (symbol: string, price: number, source: 'MANUAL' | 'AUTO' = 'MANUAL'): Promise<MarketData> => {
+    const existing = await marketDataRepository.getBySymbol(symbol);
     const now = new Date().toISOString();
     const adapter = getAdapter();
 
     if (existing) {
       await adapter.run(
-        `UPDATE marketData SET price = ?, updatedAt = ?, source = ? WHERE symbol = ? AND userId = ?`,
-        [price, now, source, symbol, userId]
+        `UPDATE marketData SET price = ?, updatedAt = ?, source = ? WHERE symbol = ?`,
+        [price, now, source, symbol]
       );
 
       return {
@@ -459,7 +459,6 @@ export const marketDataRepository = {
       const id = generateId().toString();
       const newMarketData = {
         id,
-        userId,
         symbol,
         price,
         updatedAt: now,
@@ -467,8 +466,8 @@ export const marketDataRepository = {
       };
 
       await adapter.run(
-        `INSERT INTO marketData (id, userId, symbol, price, updatedAt, source) VALUES (?, ?, ?, ?, ?, ?)`,
-        [newMarketData.id, userId, newMarketData.symbol, newMarketData.price, newMarketData.updatedAt, newMarketData.source]
+        `INSERT INTO marketData (id, symbol, price, updatedAt, source) VALUES (?, ?, ?, ?, ?)`,
+        [newMarketData.id, newMarketData.symbol, newMarketData.price, newMarketData.updatedAt, newMarketData.source]
       );
 
       return newMarketData as unknown as MarketData;

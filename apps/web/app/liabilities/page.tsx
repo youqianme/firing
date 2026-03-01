@@ -53,8 +53,8 @@ export default function LiabilitiesPage() {
         const loadedLiabilities = await liabilitiesResponse.json();
         const loadedPayments = await paymentsResponse.json();
 
-        setLiabilities(loadedLiabilities);
-        setPayments(loadedPayments);
+        setLiabilities(Array.isArray(loadedLiabilities) ? loadedLiabilities : []);
+        setPayments(Array.isArray(loadedPayments) ? loadedPayments : []);
       } catch (error) {
         console.error('Failed to load data:', error);
       } finally {
@@ -107,7 +107,7 @@ export default function LiabilitiesPage() {
         if (response.ok) {
           const updatedLiability = await response.json();
           // 更新列表
-          setLiabilities(prev => prev.map(l => l.id === updatedLiability.id ? updatedLiability : l));
+          setLiabilities(prev => (Array.isArray(prev) ? prev : []).map(l => l.id === updatedLiability.id ? updatedLiability : l));
           setEditingLiability(null);
           setIsAdding(false);
           resetForm();
@@ -135,7 +135,7 @@ export default function LiabilitiesPage() {
         if (response.ok) {
           const newLiability = await response.json();
           // 更新列表
-          setLiabilities(prev => [newLiability, ...prev]);
+          setLiabilities(prev => [newLiability, ...(Array.isArray(prev) ? prev : [])]);
           setIsAdding(false);
           resetForm();
         }
@@ -184,8 +184,8 @@ export default function LiabilitiesPage() {
         const { payment, updatedLiability } = result;
 
         // 更新列表
-        setPayments(prev => [payment, ...prev]);
-        setLiabilities(prev => prev.map(l => l.id === updatedLiability.id ? updatedLiability : l));
+        setPayments(prev => [payment, ...(Array.isArray(prev) ? prev : [])]);
+        setLiabilities(prev => (Array.isArray(prev) ? prev : []).map(l => l.id === updatedLiability.id ? updatedLiability : l));
         setIsRecordingPayment(false);
         setSelectedLiability(null);
         resetPaymentForm();
@@ -246,7 +246,7 @@ export default function LiabilitiesPage() {
 
         if (response.ok) {
           // 更新列表
-          setLiabilities(prev => prev.filter(l => l.id !== liability.id));
+          setLiabilities(prev => (Array.isArray(prev) ? prev : []).filter(l => l.id !== liability.id));
         }
       } catch (error) {
         console.error('Failed to delete liability:', error);
@@ -262,7 +262,7 @@ export default function LiabilitiesPage() {
 
   // 获取负债的还款记录
   function getLiabilityPayments(liabilityId: string): Payment[] {
-    return payments.filter(p => p.liabilityId === liabilityId);
+    return Array.isArray(payments) ? payments.filter(p => p.liabilityId === liabilityId) : [];
   }
 
   // 计算负债的剩余天数

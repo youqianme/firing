@@ -33,7 +33,7 @@ export default function AccountsPage() {
         }
       });
       const loadedAccounts = await response.json();
-      setAccounts(loadedAccounts);
+      setAccounts(Array.isArray(loadedAccounts) ? loadedAccounts : []);
     } catch (error) {
       console.error('Failed to load accounts:', error);
     }

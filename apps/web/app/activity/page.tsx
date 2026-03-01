@@ -32,14 +32,15 @@ export default function ActivityPage() {
           headers: { 'x-user-id': userId }
         });
         const loadedActivities = await response.json();
+        const safeActivities = Array.isArray(loadedActivities) ? loadedActivities : [];
 
         if (!signal.aborted) {
           if (page === 1) {
-            setActivities(loadedActivities);
+            setActivities(safeActivities);
           } else {
-            setActivities(prev => [...prev, ...loadedActivities]);
+            setActivities(prev => [...(Array.isArray(prev) ? prev : []), ...safeActivities]);
           }
-          setHasMore(loadedActivities.length === pageSize);
+          setHasMore(safeActivities.length === pageSize);
         }
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {

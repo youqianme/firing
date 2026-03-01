@@ -53,8 +53,8 @@ export default function AssetsPage() {
         const loadedAccounts = await accountsResponse.json();
 
         if (!signal.aborted) {
-          setAssets(loadedAssets);
-          setAccounts(loadedAccounts);
+          setAssets(Array.isArray(loadedAssets) ? loadedAssets : []);
+          setAccounts(Array.isArray(loadedAccounts) ? loadedAccounts : []);
         }
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
@@ -138,7 +138,7 @@ export default function AssetsPage() {
         if (response.ok) {
           const updatedAsset = await response.json();
           // 更新列表
-          setAssets(prev => prev.map(a => a.id === updatedAsset.id ? updatedAsset : a));
+          setAssets(prev => (Array.isArray(prev) ? prev : []).map(a => a.id === updatedAsset.id ? updatedAsset : a));
           setEditingAsset(null);
           setIsAdding(false);
           resetForm();
@@ -174,7 +174,7 @@ export default function AssetsPage() {
         if (response.ok) {
           const newAsset = await response.json();
           // 更新列表
-          setAssets(prev => [newAsset, ...prev]);
+          setAssets(prev => [newAsset, ...(Array.isArray(prev) ? prev : [])]);
           setIsAdding(false);
           resetForm();
         } else {
@@ -235,7 +235,7 @@ export default function AssetsPage() {
 
         if (response.ok) {
           // 更新列表
-          setAssets(prev => prev.filter(a => a.id !== asset.id));
+          setAssets(prev => (Array.isArray(prev) ? prev : []).filter(a => a.id !== asset.id));
         } else {
           throw new Error('Failed to delete asset');
         }
@@ -277,19 +277,20 @@ export default function AssetsPage() {
 
   // 过滤资产
   const filteredAssets = useMemo(() => {
+    const safeAssets = Array.isArray(assets) ? assets : [];
     switch (activeFilter) {
       case 'cash':
-        return assets.filter(asset => asset.type === 'cash');
+        return safeAssets.filter(asset => asset.type === 'cash');
       case 'bank':
-        return assets.filter(asset => asset.type === 'bank');
+        return safeAssets.filter(asset => asset.type === 'bank');
       case 'investment':
-        return assets.filter(asset => asset.type === 'investment');
+        return safeAssets.filter(asset => asset.type === 'investment');
       case 'real_estate':
-        return assets.filter(asset => asset.type === 'real_estate');
+        return safeAssets.filter(asset => asset.type === 'real_estate');
       case 'other':
-        return assets.filter(asset => asset.type === 'other');
+        return safeAssets.filter(asset => asset.type === 'other');
       default:
-        return assets;
+        return safeAssets;
     }
   }, [assets, activeFilter]);
 

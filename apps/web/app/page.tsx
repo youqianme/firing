@@ -72,14 +72,18 @@ export default function Home() {
         const loadedActivities = await activitiesResponse.json();
         const loadedFireConfig = await fireConfigResponse.json();
 
+        const safeAssets = Array.isArray(loadedAssets) ? loadedAssets : [];
+        const safeLiabilities = Array.isArray(loadedLiabilities) ? loadedLiabilities : [];
+        const safeActivities = Array.isArray(loadedActivities) ? loadedActivities : [];
+
         if (!signal.aborted) {
-          setAssets(loadedAssets);
-          setLiabilities(loadedLiabilities);
-          setActivities(loadedActivities);
+          setAssets(safeAssets);
+          setLiabilities(safeLiabilities);
+          setActivities(safeActivities);
           setFireConfig(loadedFireConfig);
 
           // 计算核心指标
-          calculateMetrics(loadedAssets, loadedLiabilities, baseCurrency);
+          calculateMetrics(safeAssets, safeLiabilities, baseCurrency);
         }
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
