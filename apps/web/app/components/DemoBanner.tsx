@@ -5,9 +5,10 @@ import { useUser } from '../context/UserContext';
 import { useSidebar } from '../context/SidebarContext';
 
 export function DemoBanner() {
-  const { isDemo, resetDemo, clearData, register } = useUser();
+  const { isDemo, isLoading: isUserLoading, initDemo, resetDemo, clearData } = useUser();
   const { isCollapsed } = useSidebar();
   const [isLoading, setIsLoading] = useState(false);
+  const [hasData, setHasData] = useState(false);
   const [leftOffset, setLeftOffset] = useState('0px');
 
   useEffect(() => {
@@ -32,12 +33,33 @@ export function DemoBanner() {
     return () => window.removeEventListener('resize', handleResize);
   }, [isCollapsed]);
 
-  if (!isDemo) return null;
+  // 检查是否有数据
+  useEffect(() => {
+    const checkData = async () => {
+      try {
+        const response = await fetch('/api/assets');
+        const data = await response.json();
+        setHasData(data.assets && data.assets.length > 0);
+      } catch {
+        setHasData(false);
+      }
+    };
+    if (isDemo) {
+      checkData();
+    }
+  }, [isDemo]);
 
-  const handleRegister = async () => {
-    const username = prompt('请输入用户名以注册账户（模拟注册）：');
-    if (username) {
-      await register(username);
+  // 加载中或不是游客模式时不显示
+  if (isUserLoading || !isDemo) return null;
+
+  const handleInit = async () => {
+    try {
+      setIsLoading(true);
+      await initDemo();
+    } catch (error) {
+      console.error('Init demo failed:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -77,40 +99,44 @@ export function DemoBanner() {
           </div>
         </div>
       )}
-      <div 
-        className="fixed bottom-0 right-0 bg-yellow-100 border-t border-yellow-200 text-yellow-800 px-4 py-3 z-15 transition-all duration-300"
+      <div
+        className="fixed bottom-0 right-0 bg-slate-100 border-t border-slate-200 text-slate-600 px-4 py-2 z-15 transition-all duration-300"
         style={{ left: leftOffset }}
       >
-        <div className="container mx-auto flex justify-between items-center">
+        <div className="container mx-auto flex justify-between items-center text-sm">
           <div className="flex items-center">
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 mr-1.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span className="font-medium">游客模式</span>
-            <span className="hidden md:inline ml-2 text-sm text-yellow-700">您正在使用临时游客账户，注册后可永久保存数据。</span>
+            <span className="text-slate-500">游客模式</span>
           </div>
-          <div className="flex items-center space-x-4">
-            <button 
-              onClick={handleClear}
-              disabled={isLoading}
-              className="text-sm font-medium hover:text-yellow-900 underline disabled:opacity-50"
-            >
-              清空数据
-            </button>
-            <button 
-              onClick={handleReset}
-              disabled={isLoading}
-              className="text-sm font-medium hover:text-yellow-900 underline disabled:opacity-50"
-            >
-              填充演示数据
-            </button>
-            <button 
-              onClick={handleRegister}
-              disabled={isLoading}
-              className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-1.5 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
-            >
-              注册账户
-            </button>
+          <div className="flex items-center space-x-3">
+            {hasData ? (
+              <>
+                <button
+                  onClick={handleClear}
+                  disabled={isLoading}
+                  className="text-slate-500 hover:text-slate-700 transition-colors disabled:opacity-50"
+                >
+                  清空
+                </button>
+                <button
+                  onClick={handleReset}
+                  disabled={isLoading}
+                  className="text-slate-500 hover:text-slate-700 transition-colors disabled:opacity-50"
+                >
+                  重置
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={handleInit}
+                disabled={isLoading}
+                className="text-blue-600 hover:text-blue-700 font-medium transition-colors disabled:opacity-50"
+              >
+                填充演示数据
+              </button>
+            )}
           </div>
         </div>
       </div>

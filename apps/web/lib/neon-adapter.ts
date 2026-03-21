@@ -15,24 +15,10 @@ export class NeonDatabaseAdapter implements DatabaseAdapter {
 
   /**
    * 将 SQLite 风格的 SQL (使用 ?) 转换为 Postgres 风格 (使用 $1, $2...)
-   * 同时为所有 camelCase 标识符添加双引号
    */
   private convertSql(sql: string): string {
     let index = 1;
-    const sqlKeywords = ['SELECT', 'FROM', 'WHERE', 'AND', 'OR', 'INSERT', 'INTO', 'VALUES', 'UPDATE', 'SET', 'DELETE', 'ORDER', 'BY', 'ASC', 'DESC', 'LIMIT', 'OFFSET', 'JOIN', 'LEFT', 'RIGHT', 'INNER', 'OUTER', 'ON', 'GROUP', 'HAVING', 'COUNT', 'SUM', 'AVG', 'MAX', 'MIN', 'DISTINCT', 'NULL', 'NOT', 'IN', 'LIKE', 'BETWEEN', 'IS', 'DEFAULT', 'PRIMARY', 'KEY', 'FOREIGN', 'REFERENCES', 'CASCADE', 'CREATE', 'TABLE', 'IF', 'EXISTS', 'TEXT', 'DOUBLE', 'PRECISION', 'INTEGER', 'BEGIN', 'COMMIT', 'ROLLBACK', 'ALTER', 'ADD', 'COLUMN'];
-    
-    // Step 1: Quote camelCase identifiers with double quotes
-    let converted = sql.replace(/\b([a-z]+[A-Z][a-zA-Z0-9]*)\b/g, (match) => {
-      if (sqlKeywords.includes(match.toUpperCase())) {
-        return match;
-      }
-      return `"${match}"`;
-    });
-    
-    // Step 2: Replace ? with $1, $2...
-    converted = converted.replace(/\?/g, () => `$${index++}`);
-    
-    return converted;
+    return sql.replace(/\?/g, () => `$${index++}`);
   }
 
   /**
@@ -47,7 +33,7 @@ export class NeonDatabaseAdapter implements DatabaseAdapter {
 
   /**
    * 执行 SQL 查询
-   * @param sql SQL 查询语句
+   * @param sql SQL 查询语句（使用 ? 作为参数占位符）
    * @param params 查询参数
    * @returns 查询结果
    */
@@ -65,7 +51,7 @@ export class NeonDatabaseAdapter implements DatabaseAdapter {
 
   /**
    * 执行 SQL 语句（不返回结果）
-   * @param sql SQL 语句
+   * @param sql SQL 语句（使用 ? 作为参数占位符）
    * @param params 语句参数
    */
   async run(sql: string, params: any[] = []): Promise<void> {
@@ -81,7 +67,7 @@ export class NeonDatabaseAdapter implements DatabaseAdapter {
 
   /**
    * 获取单个查询结果
-   * @param sql SQL 查询语句
+   * @param sql SQL 查询语句（使用 ? 作为参数占位符）
    * @param params 查询参数
    * @returns 单个查询结果
    */

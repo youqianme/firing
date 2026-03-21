@@ -71,7 +71,7 @@ export async function GET(request: Request) {
         date: dateStr,
         total: parseFloat(total.toFixed(2)),
         activity: parseFloat(activityChange.toFixed(2)),
-        market: parseFloat(markChange.toFixed(2)),
+        market: parseFloat(marketChange.toFixed(2)),
         interest: parseFloat(interestEarnings.toFixed(2))
       });
     }

@@ -31,13 +31,25 @@
 ```sql
 CREATE TABLE users (
     id TEXT PRIMARY KEY,
-    email TEXT UNIQUE,
-    username TEXT,
-    is_guest BOOLEAN DEFAULT TRUE,
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    email TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_login TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+```
+
+**字段说明**:
+- `id`: 用户唯一标识，格式为 `user-{uuid}` 或 `guest-{uuid}`
+- `username`: 用户名，3-20个字符，注册用户的唯一标识
+- `password_hash`: bcrypt 加密的密码哈希
+- `email`: 可选的邮箱地址
+- `created_at`: 账户创建时间
+- `updated_at`: 最后更新时间
+
+**索引**:
+```sql
+CREATE INDEX idx_users_username ON users(username);
 ```
 
 #### 用户设置表 (user_settings)

@@ -5,9 +5,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 export interface UserContextType {
   userId: string;
+  username: string | null;
   isDemo: boolean;
-  login: (id: string) => void;
+  isLoggedIn: boolean;
+  isLoading: boolean;
+  login: (id: string, username?: string) => void;
   logout: () => void;
+  initDemo: () => Promise<void>;
   resetDemo: () => Promise<void>;
   clearData: () => Promise<void>;
   register: (username: string) => Promise<void>;
@@ -17,49 +21,46 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [userId, setUserId] = useState<string>('');
+  const [username, setUsername] = useState<string | null>(null);
   const [isDemo, setIsDemo] = useState<boolean>(true);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Check for stored user ID
     const storedUserId = localStorage.getItem('userId');
+    const storedUsername = localStorage.getItem('username');
+    const storedIsLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+
     if (storedUserId) {
       setUserId(storedUserId);
-      setIsDemo(storedUserId === 'demo' || storedUserId.startsWith('guest-'));
+      const isGuest = storedUserId.startsWith('guest-');
+      setIsDemo(isGuest);
+      setIsLoggedIn(storedIsLoggedIn && !isGuest);
+      if (storedUsername && storedIsLoggedIn) {
+        setUsername(storedUsername);
+      }
     } else {
       // Generate new guest ID if no stored ID
       const newGuestId = `guest-${uuidv4()}`;
       setUserId(newGuestId);
       setIsDemo(true);
+      setIsLoggedIn(false);
       localStorage.setItem('userId', newGuestId);
     }
-    setIsInitialized(true);
+    setIsLoading(false);
   }, []);
 
-  // Initialize demo data if needed
-  useEffect(() => {
-    // 只有在初始化完成、是demo用户、有userId且数据为空时才初始化
-    if (isInitialized && isDemo && userId) {
-      // 检查是否已经有数据，避免清空后被重新初始化
-      // 这里通过localStorage标记是否是用户主动清空
-      const isCleared = localStorage.getItem(`cleared_${userId}`);
-      
-      if (!isCleared) {
-        fetch('/api/demo/init', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-user-id': userId
-          }
-        }).catch(console.error);
-      }
-    }
-  }, [isInitialized, isDemo, userId]);
-
-  const login = (id: string) => {
+  const login = (id: string, username?: string) => {
     setUserId(id);
-    setIsDemo(id === 'demo' || id.startsWith('guest-'));
+    setIsDemo(id.startsWith('guest-'));
+    setIsLoggedIn(!id.startsWith('guest-'));
     localStorage.setItem('userId', id);
+    localStorage.setItem('isLoggedIn', (!id.startsWith('guest-')).toString());
+    if (username) {
+      setUsername(username);
+      localStorage.setItem('username', username);
+    }
     // Reload to refresh data
     window.location.reload();
   };
@@ -67,24 +68,50 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     const newGuestId = `guest-${uuidv4()}`;
     setUserId(newGuestId);
+    setUsername(null);
     setIsDemo(true);
+    setIsLoggedIn(false);
     localStorage.setItem('userId', newGuestId);
+    localStorage.removeItem('username');
+    localStorage.setItem('isLoggedIn', 'false');
     // Reload to refresh data
     window.location.reload();
   };
 
-  const resetDemo = async () => {
+  // 初始化演示数据
+  const initDemo = async () => {
     if (isDemo && userId) {
-      // 移除清空标记
-      localStorage.removeItem(`cleared_${userId}`);
-      
-      await fetch('/api/demo/reset', {
+      await fetch('/api/demo/init', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-user-id': userId
         }
       });
+      window.location.reload();
+    }
+  };
+
+  // 重置演示数据（清空后重新初始化）
+  const resetDemo = async () => {
+    if (isDemo && userId) {
+      // 先清空数据
+      await fetch('/api/settings', {
+        method: 'DELETE',
+        headers: {
+          'x-user-id': userId
+        }
+      });
+
+      // 重新初始化演示数据
+      await fetch('/api/demo/init', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': userId
+        }
+      });
+
       window.location.reload();
     }
   };
@@ -97,47 +124,28 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           'x-user-id': userId
         }
       });
-      
-      // 标记为已清空，防止重新初始化
-      if (isDemo) {
-        localStorage.setItem(`cleared_${userId}`, 'true');
-      }
-      
+
       window.location.reload();
     }
   };
 
   const register = async (username: string) => {
-    if (!isDemo) return;
-
-    try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': userId
-        },
-        body: JSON.stringify({ username })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const newUserId = data.userId;
-        setUserId(newUserId);
-        setIsDemo(false);
-        localStorage.setItem('userId', newUserId);
-        // Reload to refresh data
-        window.location.reload();
-      } else {
-        console.error('Registration failed');
-      }
-    } catch (error) {
-      console.error('Error during registration:', error);
+    // 注册成功后更新状态
+    const storedUserId = localStorage.getItem('userId');
+    if (storedUserId) {
+      setUserId(storedUserId);
+      setUsername(username);
+      setIsDemo(false);
+      setIsLoggedIn(true);
+      localStorage.setItem('username', username);
+      localStorage.setItem('isLoggedIn', 'true');
+      // Reload to refresh data
+      window.location.reload();
     }
   };
 
   return (
-    <UserContext.Provider value={{ userId, isDemo, login, logout, resetDemo, clearData, register }}>
+    <UserContext.Provider value={{ userId, username, isDemo, isLoggedIn, isLoading, login, logout, initDemo, resetDemo, clearData, register }}>
       {children}
     </UserContext.Provider>
   );

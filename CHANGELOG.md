@@ -1,5 +1,48 @@
 # 有钱么财务应用变更日志
 
+## [1.5.0] - 2026-03-22
+
+### 🔐 用户认证系统
+
+- **注册登录功能**
+  - 实现用户注册页面 (`/auth/register`)，支持用户名、密码、邮箱
+  - 实现用户登录页面 (`/auth/login`)，使用 bcrypt 加密验证密码
+  - 注册成功后自动登录并跳转到首页
+  - 登录成功后跳转到首页
+  - 新增 `users` 表存储用户账户信息
+
+- **UI 改进**
+  - 新增 UserMenu 组件，在顶部导航栏显示用户头像和下拉菜单
+  - 登录用户显示头像（用户名首字母）和设置/退出菜单
+  - 游客显示"登录"和"注册"按钮
+  - 简化 DemoBanner，移除登录相关按钮，仅保留数据操作功能
+  - 添加 `isLoading` 状态到 UserContext，避免状态跳变
+
+- **数据库列名规范**
+  - 所有列名统一使用 snake_case（`user_id`, `created_at`, `password_hash` 等）
+  - 表名使用 snake_case（`fire_config`, `user_settings`, `market_data`）
+  - 更新 `neon-adapter.ts`，移除 camelCase 列名转换逻辑
+
+- **演示数据优化**
+  - 每个用户的演示数据使用唯一 ID 生成，避免主键冲突
+  - 注册时自动迁移游客数据到正式账户
+  - 演示数据不再自动初始化，需点击"填充演示数据"按钮
+
+### 📁 新增文件
+- `apps/web/app/auth/register/page.tsx` - 注册页面
+- `apps/web/app/auth/login/page.tsx` - 登录页面
+- `apps/web/app/api/auth/register/route.ts` - 注册 API
+- `apps/web/app/api/auth/login/route.ts` - 登录 API
+- `apps/web/app/components/UserMenu.tsx` - 用户菜单组件
+
+### 📁 修改文件
+- `apps/web/app/context/UserContext.tsx` - 添加 `isLoading` 状态
+- `apps/web/app/components/DemoBanner.tsx` - 简化设计，移除登录按钮
+- `apps/web/app/layout.tsx` - 集成 UserMenu 到顶部导航栏
+- `apps/web/lib/dataAccess.ts` - 统一使用 snake_case 列名
+- `apps/web/lib/neon-adapter.ts` - 简化 SQL 转换逻辑
+- `packages/data-access/sql/schema.sql` - 添加 `users` 表，统一列名规范
+
 ## [1.4.0] - 2026-03-22
 
 ### 🏗️ 架构变更
