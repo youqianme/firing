@@ -1,13 +1,9 @@
-import { initializeDatabase } from '../../../lib/database';
 import {
   transactionRepository,
   assetRepository,
   activityRepository
 } from '../../../lib/dataAccess';
 // 移除类型导入，直接使用字符串值
-
-// 初始化数据库
-initializeDatabase();
 
 export async function GET(request: Request) {
   const userId = request.headers.get('x-user-id') || 'demo';

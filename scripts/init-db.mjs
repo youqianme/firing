@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { readFileSync } from 'fs';
 import dotenv from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -9,7 +10,7 @@ const __dirname = dirname(__filename);
 dotenv.config({ path: join(__dirname, '../../.env') });
 dotenv.config({ path: join(__dirname, '../../config/.env.example') });
 
-import { DatabaseManager, DatabaseAdapter } from '@firing/data-access';
+import { DatabaseManager } from '@firing/data-access';
 
 async function loadAdapter() {
   if (process.env.POSTGRES_URL || process.env.NEON_DATABASE_URL) {
@@ -28,14 +29,31 @@ async function loadAdapter() {
   }
 }
 
+async function executeSqlFile(adapter, filePath) {
+  console.log(`Executing SQL file: ${filePath}`);
+  const sql = readFileSync(filePath, 'utf-8');
+  
+  // Split SQL by semicolon to execute statements individually
+  const statements = sql
+    .split(';')
+    .map(s => s.trim())
+    .filter(s => s.length > 0);
+  
+  for (const statement of statements) {
+    await adapter.run(statement);
+  }
+  
+  console.log(`Executed ${statements.length} SQL statements`);
+}
+
 async function main() {
   console.log('Starting database initialization...');
   try {
     const adapter = await loadAdapter();
     const dbManager = DatabaseManager.getInstance(adapter);
     
-    console.log('Initializing database tables...');
-    await dbManager.initialize();
+    const sqlFilePath = join(__dirname, '../packages/data-access/sql/schema.sql');
+    await executeSqlFile(adapter, sqlFilePath);
     
     console.log('Database initialized successfully!');
     

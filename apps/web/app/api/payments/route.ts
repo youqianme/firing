@@ -1,4 +1,3 @@
-import { initializeDatabase } from '../../../lib/database';
 import {
   paymentRepository,
   liabilityRepository,
@@ -7,7 +6,6 @@ import {
 
 export async function GET(request: Request) {
   const userId = request.headers.get('x-user-id') || 'demo';
-  await initializeDatabase();
   try {
     const payments = await paymentRepository.getAll(userId);
     return new Response(JSON.stringify(payments), {
@@ -28,7 +26,6 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const userId = request.headers.get('x-user-id') || 'demo';
-  await initializeDatabase();
   try {
     const paymentData = await request.json();
     

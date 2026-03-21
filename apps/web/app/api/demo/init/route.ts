@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { initializeDatabase } from '../../../../lib/database';
 import { 
   assetRepository, 
   liabilityRepository, 
@@ -25,9 +24,6 @@ import {
 export async function POST(request: Request) {
   try {
     const userId = request.headers.get('x-user-id') || 'demo';
-    
-    // Ensure database is initialized
-    await initializeDatabase();
 
     // Check if user already has assets
     const existingAssets = await assetRepository.getAll(userId);

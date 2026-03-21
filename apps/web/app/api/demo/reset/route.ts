@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { dbManager, initializeDatabase } from '../../../../lib/database';
+import { dbManager } from '../../../../lib/database';
 import { 
   assetRepository, 
   liabilityRepository, 
@@ -26,10 +26,6 @@ export async function POST(request: Request) {
   try {
     const userId = request.headers.get('x-user-id') || 'demo';
     
-    // Ensure database is initialized
-    await initializeDatabase();
-    
-    // 注意：这里必须使用 global.dbManager 或者从 lib/database 导入的 dbManager
     const adapter = dbManager.getAdapter();
 
     // Delete all data for user

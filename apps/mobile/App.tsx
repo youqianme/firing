@@ -1,22 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import RootLayout from './app/_layout';
-import { initDatabase } from './lib/db';
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // 初始化数据库
+    // 应用初始化
     const initApp = async () => {
       try {
         setIsLoading(true);
-        await initDatabase();
-        console.log('Database initialized successfully');
+        // 数据库已由人工初始化，无需程序处理
+        console.log('App initialized successfully');
       } catch (err) {
-        console.error('Error initializing database:', err);
-        setError('Failed to initialize database');
+        console.error('Error initializing app:', err);
+        setError('Failed to initialize app');
       } finally {
         setIsLoading(false);
       }
@@ -29,7 +28,7 @@ export default function App() {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Initializing database...</Text>
+        <Text style={styles.loadingText}>Initializing...</Text>
       </View>
     );
   }

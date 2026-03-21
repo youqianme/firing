@@ -63,7 +63,36 @@ cd firing
 npm install
 ```
 
-### 3. 启动开发服务器
+### 3. 数据库初始化
+
+本项目使用 **人工执行 SQL 文件** 的方式进行数据库初始化，程序运行时不再自动创建表结构。
+
+#### 初始化步骤
+
+```bash
+# 使用 SQLite 客户端执行 schema.sql
+sqlite3 youqianme.db < packages/data-access/sql/schema.sql
+
+# 或使用其他数据库客户端执行
+# 对于 Neon (Postgres) 或 Turso (LibSQL)，请使用对应客户端执行 SQL 文件
+```
+
+#### 数据库 Schema 文件
+
+- **位置**: `packages/data-access/sql/schema.sql`
+- **内容**: 包含所有表的 DDL 语句和初始数据
+- **更新**: 当表结构变更时，需要人工更新此文件并重新执行
+
+#### 使用 init-db.mjs 脚本（可选）
+
+```bash
+# 配置环境变量后，运行初始化脚本
+node scripts/init-db.mjs
+```
+
+该脚本会读取 `packages/data-access/sql/schema.sql` 并执行其中的 SQL 语句。
+
+### 4. 启动开发服务器
 
 #### Web 端
 
@@ -159,7 +188,7 @@ npm run dev:mobile
 
 注意：首次启动可能需要下载依赖和构建应用，时间会稍长。
 
-### 4. 构建生产版本
+### 5. 构建生产版本
 
 #### Web 端
 

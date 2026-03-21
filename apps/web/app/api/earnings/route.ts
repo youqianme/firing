@@ -1,8 +1,4 @@
-import { initializeDatabase } from '../../../lib/database';
 import { assetRepository, activityRepository, marketDataRepository } from '../../../lib/dataAccess';
-
-// 初始化数据库
-initializeDatabase();
 
 export async function GET(request: Request) {
   const userId = request.headers.get('x-user-id') || 'demo';
@@ -75,7 +71,7 @@ export async function GET(request: Request) {
         date: dateStr,
         total: parseFloat(total.toFixed(2)),
         activity: parseFloat(activityChange.toFixed(2)),
-        market: parseFloat(marketChange.toFixed(2)),
+        market: parseFloat(markChange.toFixed(2)),
         interest: parseFloat(interestEarnings.toFixed(2))
       });
     }

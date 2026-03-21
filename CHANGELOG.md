@@ -1,5 +1,48 @@
 # 有钱么财务应用变更日志
 
+## [1.4.0] - 2026-03-22
+
+### 🏗️ 架构变更
+
+- **数据库初始化方式重构**
+  - 将数据库初始化从程序自动执行改为人工执行 SQL 文件
+  - 新增 `packages/data-access/sql/schema.sql` 文件，集中管理所有 DDL 语句
+  - 移除 `DatabaseManager.initialize()` 方法，程序不再自动创建表结构
+  - 移除所有 API 路由中的 `initializeDatabase()` 调用
+  - 删除 `apps/web/app/api/init.ts` API 端点
+  - 删除 `scripts/fix-routes.mjs` 脚本
+  - 更新 `scripts/init-db.mjs`，改为读取并执行 SQL 文件
+
+### 📁 文件变更
+
+- **新增文件**
+  - `packages/data-access/sql/schema.sql` - 数据库 Schema 定义文件
+
+- **删除文件**
+  - `apps/web/app/api/init.ts` - 数据库初始化 API 端点
+  - `scripts/fix-routes.mjs` - 路由修复脚本
+
+- **修改文件**
+  - `packages/data-access/src/database/manager.ts` - 移除 `initialize()` 方法
+  - `apps/web/lib/database.ts` - 移除 `initializeDatabase()` 函数
+  - `apps/mobile/lib/db.ts` - 移除 `initDatabase()` 函数
+  - `apps/mobile/App.tsx` - 移除数据库初始化调用
+  - 所有 API 路由文件 - 移除 `initializeDatabase()` 导入和调用
+
+### 🔧 使用方式变更
+
+**旧方式**（程序自动初始化）：
+```typescript
+// 程序启动时自动创建表
+await dbManager.initialize();
+```
+
+**新方式**（人工执行 SQL）：
+```bash
+# 人工执行 SQL 文件初始化数据库
+sqlite3 database.db < packages/data-access/sql/schema.sql
+```
+
 ## [1.3.0] - 2026-03-02
 
 ### 🚀 新特性

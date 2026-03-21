@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { dbManager, initializeDatabase } from '../../../../lib/database';
+import { dbManager } from '../../../../lib/database';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: Request) {
@@ -15,9 +15,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Ensure database is initialized
-    await initializeDatabase();
-    
     const adapter = dbManager.getAdapter();
     const newUserId = `user-${uuidv4()}`;
 
