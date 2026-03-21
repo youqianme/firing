@@ -305,6 +305,37 @@ interface AccountUpgrade {
 
 ## 📋 更新日志
 
+### v2.0.0 (2026-03-22) - 用户认证系统
+
+#### 🔐 注册登录功能
+- ✅ 实现用户注册功能，支持用户名、密码、邮箱
+- ✅ 实现用户登录功能，使用 bcrypt 加密密码
+- ✅ 注册成功后自动登录并跳转到首页
+- ✅ 登录成功后跳转到首页
+
+#### 🎨 UI 改进
+- ✅ 新增 UserMenu 组件，在顶部导航栏显示用户头像和下拉菜单
+- ✅ 登录用户显示头像（用户名首字母）和设置/退出菜单
+- ✅ 游客显示"登录"和"注册"按钮
+- ✅ 简化 DemoBanner，移除登录相关按钮
+- ✅ 添加加载状态占位符，避免状态跳变
+
+#### 🗄️ 数据库变更
+- ✅ 新增 `users` 表存储用户账户信息
+- ✅ 所有列名统一使用 snake_case（user_id, created_at 等）
+- ✅ 移除 SQLite 语法（INSERT OR IGNORE → INSERT ON CONFLICT DO NOTHING）
+
+#### 🔄 数据迁移
+- ✅ 注册时自动迁移游客数据到正式账户
+- ✅ 每个用户的演示数据使用唯一 ID 生成，避免冲突
+
+#### 📁 新增文件
+- `apps/web/app/auth/register/page.tsx` - 注册页面
+- `apps/web/app/auth/login/page.tsx` - 登录页面
+- `apps/web/app/api/auth/register/route.ts` - 注册 API
+- `apps/web/app/api/auth/login/route.ts` - 登录 API
+- `apps/web/app/components/UserMenu.tsx` - 用户菜单组件
+
 ### v1.0.0 (2026-02-28)
 - ✅ 实现游客账户系统核心功能
 - ✅ 添加数据隔离机制
@@ -316,10 +347,20 @@ interface AccountUpgrade {
 ## 🔗 相关文件
 
 ### 核心实现文件
-- `apps/web/app/context/UserContext.tsx` - 用户状态管理
+- `apps/web/app/context/UserContext.tsx` - 用户状态管理（含 isLoading 状态）
 - `apps/web/app/components/DemoBanner.tsx` - 游客模式UI组件
+- `apps/web/app/components/UserMenu.tsx` - 用户菜单组件（顶部导航栏）
 - `apps/web/app/api/settings/route.ts` - 数据清空API
+- `apps/web/app/api/demo/init/route.ts` - 演示数据初始化API
 - `apps/web/app/api/demo/reset/route.ts` - 演示数据重置API
+
+### 认证相关文件
+- `apps/web/app/auth/register/page.tsx` - 注册页面UI
+- `apps/web/app/auth/login/page.tsx` - 登录页面UI
+- `apps/web/app/api/auth/register/route.ts` - 注册API（bcrypt加密）
+- `apps/web/app/api/auth/login/route.ts` - 登录API（密码验证）
+- `apps/web/lib/dataAccess.ts` - 数据访问层（snake_case列名）
+- `apps/web/lib/neon-adapter.ts` - Neon数据库适配器
 
 ### 数据库相关
 - `packages/data-access/src/database/manager.ts` - 数据库管理器

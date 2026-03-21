@@ -1,8 +1,5 @@
-import { dbManager, initializeDatabase } from '../../../lib/database';
+import { dbManager } from '../../../lib/database';
 import { userSettingsRepository, assetRepository, liabilityRepository, transactionRepository, activityRepository, fireConfigRepository } from '../../../lib/dataAccess';
-
-// 初始化数据库
-initializeDatabase();
 
 export async function GET(request: Request) {
   const userId = request.headers.get('x-user-id') || 'demo';
@@ -55,9 +52,6 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   const userId = request.headers.get('x-user-id') || 'demo';
   try {
-    // 确保数据库已初始化
-    await initializeDatabase();
-
     // 清空当前用户的所有数据（危险操作）
     const adapter = dbManager.getAdapter();
     

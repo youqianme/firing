@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { initializeDatabase } from '../../../../lib/database';
 import { 
   assetRepository, 
   liabilityRepository, 
@@ -13,16 +12,10 @@ import {
   mockUserSettings 
 } from '@firing/utils';
 
-// 初始化数据库
-initializeDatabase();
-
 // 生成演示数据（与游客账户系统保持一致）
 export async function POST(request: Request) {
   const userId = request.headers.get('x-user-id') || 'demo';
   try {
-    // 确保数据库已初始化
-    await initializeDatabase();
-
     // 检查是否已存在数据（避免重复生成）
     const existingAssets = await assetRepository.getAll(userId);
     if (existingAssets.length > 0) {

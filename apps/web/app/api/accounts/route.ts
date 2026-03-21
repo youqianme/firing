@@ -1,4 +1,3 @@
-import { initializeDatabase } from '../../../lib/database';
 import {
   accountRepository,
   activityRepository
@@ -6,7 +5,6 @@ import {
 
 export async function GET(request: Request) {
   const userId = request.headers.get('x-user-id') || 'demo';
-  await initializeDatabase();
   try {
     const accounts = await accountRepository.getAll(userId);
     return new Response(JSON.stringify(accounts), {
@@ -27,7 +25,6 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const userId = request.headers.get('x-user-id') || 'demo';
-  await initializeDatabase();
   try {
     const accountData = await request.json();
     const newAccount = await accountRepository.create(userId, accountData);
@@ -61,7 +58,6 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   const userId = request.headers.get('x-user-id') || 'demo';
-  await initializeDatabase();
   try {
     const url = new URL(request.url);
     const id = url.pathname.split('/').pop();
@@ -118,7 +114,6 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   const userId = request.headers.get('x-user-id') || 'demo';
-  await initializeDatabase();
   try {
     const url = new URL(request.url);
     const id = url.pathname.split('/').pop();

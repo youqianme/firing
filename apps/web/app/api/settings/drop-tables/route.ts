@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
-import { dbManager, initializeDatabase } from '../../../../lib/database';
+import { dbManager } from '../../../../lib/database';
 
 export async function POST(request: Request) {
   try {
-    await initializeDatabase();
     const adapter = dbManager.getAdapter();
 
     const tables = [

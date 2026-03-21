@@ -4,6 +4,7 @@ import '../styles/globals.css';
 import { UserProvider } from './context/UserContext';
 import { SidebarProvider } from './context/SidebarContext';
 import { DemoBanner } from './components/DemoBanner';
+import { UserMenu } from './components/UserMenu';
 import { Sidebar } from './components/Sidebar';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -29,6 +30,17 @@ export default function RootLayout({
           
           {/* 主内容区域 */}
           <main className="flex-1 min-h-screen">
+            {/* 顶部导航栏 - 桌面端 */}
+            <header className="hidden md:flex items-center justify-between h-16 px-6 bg-white border-b border-slate-200 sticky top-0 z-10">
+              <a href="/" className="text-xl font-bold text-slate-900 flex items-center">
+                <svg className="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                有钱么
+              </a>
+              <UserMenu />
+            </header>
+
             {/* 移动端顶部导航 */}
             <div className="md:hidden bg-white border-b border-slate-200 sticky top-0 z-10">
               <div className="flex items-center justify-between h-16 px-4">
@@ -38,6 +50,7 @@ export default function RootLayout({
                   </svg>
                   有钱么
                 </a>
+                <UserMenu />
               </div>
             </div>
             
@@ -75,7 +88,7 @@ export default function RootLayout({
                 </a>
                 <a href="/settings" className="flex flex-col items-center justify-center text-sm text-slate-700 hover:text-blue-600">
                   <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c-.94-1.543.826-3.31-2.37 2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94-1.543.826-3.31-2.37 2.37.996.608 2.296.07 2.572-1.065z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                   <span>设置</span>

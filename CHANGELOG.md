@@ -1,5 +1,91 @@
 # 有钱么财务应用变更日志
 
+## [1.5.0] - 2026-03-22
+
+### 🔐 用户认证系统
+
+- **注册登录功能**
+  - 实现用户注册页面 (`/auth/register`)，支持用户名、密码、邮箱
+  - 实现用户登录页面 (`/auth/login`)，使用 bcrypt 加密验证密码
+  - 注册成功后自动登录并跳转到首页
+  - 登录成功后跳转到首页
+  - 新增 `users` 表存储用户账户信息
+
+- **UI 改进**
+  - 新增 UserMenu 组件，在顶部导航栏显示用户头像和下拉菜单
+  - 登录用户显示头像（用户名首字母）和设置/退出菜单
+  - 游客显示"登录"和"注册"按钮
+  - 简化 DemoBanner，移除登录相关按钮，仅保留数据操作功能
+  - 添加 `isLoading` 状态到 UserContext，避免状态跳变
+
+- **数据库列名规范**
+  - 所有列名统一使用 snake_case（`user_id`, `created_at`, `password_hash` 等）
+  - 表名使用 snake_case（`fire_config`, `user_settings`, `market_data`）
+  - 更新 `neon-adapter.ts`，移除 camelCase 列名转换逻辑
+
+- **演示数据优化**
+  - 每个用户的演示数据使用唯一 ID 生成，避免主键冲突
+  - 注册时自动迁移游客数据到正式账户
+  - 演示数据不再自动初始化，需点击"填充演示数据"按钮
+
+### 📁 新增文件
+- `apps/web/app/auth/register/page.tsx` - 注册页面
+- `apps/web/app/auth/login/page.tsx` - 登录页面
+- `apps/web/app/api/auth/register/route.ts` - 注册 API
+- `apps/web/app/api/auth/login/route.ts` - 登录 API
+- `apps/web/app/components/UserMenu.tsx` - 用户菜单组件
+
+### 📁 修改文件
+- `apps/web/app/context/UserContext.tsx` - 添加 `isLoading` 状态
+- `apps/web/app/components/DemoBanner.tsx` - 简化设计，移除登录按钮
+- `apps/web/app/layout.tsx` - 集成 UserMenu 到顶部导航栏
+- `apps/web/lib/dataAccess.ts` - 统一使用 snake_case 列名
+- `apps/web/lib/neon-adapter.ts` - 简化 SQL 转换逻辑
+- `packages/data-access/sql/schema.sql` - 添加 `users` 表，统一列名规范
+
+## [1.4.0] - 2026-03-22
+
+### 🏗️ 架构变更
+
+- **数据库初始化方式重构**
+  - 将数据库初始化从程序自动执行改为人工执行 SQL 文件
+  - 新增 `packages/data-access/sql/schema.sql` 文件，集中管理所有 DDL 语句
+  - 移除 `DatabaseManager.initialize()` 方法，程序不再自动创建表结构
+  - 移除所有 API 路由中的 `initializeDatabase()` 调用
+  - 删除 `apps/web/app/api/init.ts` API 端点
+  - 删除 `scripts/fix-routes.mjs` 脚本
+  - 更新 `scripts/init-db.mjs`，改为读取并执行 SQL 文件
+
+### 📁 文件变更
+
+- **新增文件**
+  - `packages/data-access/sql/schema.sql` - 数据库 Schema 定义文件
+
+- **删除文件**
+  - `apps/web/app/api/init.ts` - 数据库初始化 API 端点
+  - `scripts/fix-routes.mjs` - 路由修复脚本
+
+- **修改文件**
+  - `packages/data-access/src/database/manager.ts` - 移除 `initialize()` 方法
+  - `apps/web/lib/database.ts` - 移除 `initializeDatabase()` 函数
+  - `apps/mobile/lib/db.ts` - 移除 `initDatabase()` 函数
+  - `apps/mobile/App.tsx` - 移除数据库初始化调用
+  - 所有 API 路由文件 - 移除 `initializeDatabase()` 导入和调用
+
+### 🔧 使用方式变更
+
+**旧方式**（程序自动初始化）：
+```typescript
+// 程序启动时自动创建表
+await dbManager.initialize();
+```
+
+**新方式**（人工执行 SQL）：
+```bash
+# 人工执行 SQL 文件初始化数据库
+sqlite3 database.db < packages/data-access/sql/schema.sql
+```
+
 ## [1.3.0] - 2026-03-02
 
 ### 🚀 新特性

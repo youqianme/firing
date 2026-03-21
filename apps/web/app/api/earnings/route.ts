@@ -1,8 +1,4 @@
-import { initializeDatabase } from '../../../lib/database';
 import { assetRepository, activityRepository, marketDataRepository } from '../../../lib/dataAccess';
-
-// 初始化数据库
-initializeDatabase();
 
 export async function GET(request: Request) {
   const userId = request.headers.get('x-user-id') || 'demo';

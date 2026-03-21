@@ -35,10 +35,5 @@ if (!global.dbManager) {
   dbManager = global.dbManager;
 }
 
-// 初始化数据库
-export const initializeDatabase = async () => {
-  await dbManager.initialize();
-};
-
 // 导出数据库管理器
 export { dbManager };

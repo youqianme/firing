@@ -31,13 +31,25 @@
 ```sql
 CREATE TABLE users (
     id TEXT PRIMARY KEY,
-    email TEXT UNIQUE,
-    username TEXT,
-    is_guest BOOLEAN DEFAULT TRUE,
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    email TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_login TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+```
+
+**字段说明**:
+- `id`: 用户唯一标识，格式为 `user-{uuid}` 或 `guest-{uuid}`
+- `username`: 用户名，3-20个字符，注册用户的唯一标识
+- `password_hash`: bcrypt 加密的密码哈希
+- `email`: 可选的邮箱地址
+- `created_at`: 账户创建时间
+- `updated_at`: 最后更新时间
+
+**索引**:
+```sql
+CREATE INDEX idx_users_username ON users(username);
 ```
 
 #### 用户设置表 (user_settings)
@@ -250,45 +262,120 @@ CREATE INDEX idx_activity_created_at ON activity_logs(created_at);
 
 ## 🔧 数据库初始化
 
-### 1. 初始化脚本
+### 1. 初始化方式
 
-#### SQLite初始化 (packages/data-access/src/database/init.sql)
-```sql
--- 启用外键约束
-PRAGMA foreign_keys = ON;
+本项目采用 **人工执行 SQL 文件** 的方式进行数据库初始化，程序运行时不再自动创建表结构。
 
--- 创建所有表
--- [上述所有CREATE TABLE语句]
+#### Schema 文件位置
+- **文件**: `packages/data-access/sql/schema.sql`
+- **内容**: 包含所有表的 DDL 语句和初始数据
 
--- 创建视图
-CREATE VIEW net_worth_summary AS
-SELECT 
-    u.id as user_id,
-    COALESCE(SUM(a.current_value), 0) as total_assets,
-    COALESCE(SUM(l.current_balance), 0) as total_liabilities,
-    COALESCE(SUM(a.current_value), 0) - COALESCE(SUM(l.current_balance), 0) as net_worth,
-    datetime('now') as calculated_at
-FROM users u
-LEFT JOIN assets a ON u.id = a.user_id AND a.is_active = TRUE
-LEFT JOIN liabilities l ON u.id = l.user_id AND l.is_active = TRUE
-GROUP BY u.id;
+#### 初始化步骤
 
--- 创建资产分类视图
-CREATE VIEW asset_allocation AS
-SELECT 
-    user_id,
-    type,
-    COUNT(*) as asset_count,
-    SUM(current_value) as total_value,
-    ROUND(SUM(current_value) * 100.0 / NULLIF(
-        (SELECT SUM(current_value) FROM assets a2 WHERE a2.user_id = a1.user_id AND a2.is_active = TRUE), 0
-    ), 2) as percentage
-FROM assets a1
-WHERE is_active = TRUE
-GROUP BY user_id, type;
+##### SQLite
+```bash
+# 使用 sqlite3 客户端执行
+sqlite3 youqianme.db < packages/data-access/sql/schema.sql
 ```
 
-### 2. 数据库适配器
+##### Neon (Postgres)
+```bash
+# 使用 psql 客户端执行
+psql $POSTGRES_URL -f packages/data-access/sql/schema.sql
+```
+
+##### Turso (LibSQL)
+```bash
+# 使用 turso 客户端执行
+turso db shell <packages/data-access/sql/schema.sql>
+```
+
+#### 使用 Node.js 脚本初始化
+```bash
+# 配置环境变量后运行
+node scripts/init-db.mjs
+```
+
+该脚本会：
+1. 根据环境变量选择数据库适配器（Neon/Turso）
+2. 读取 `packages/data-access/sql/schema.sql` 文件
+3. 执行其中的 SQL 语句
+
+### 2. Schema 文件结构
+
+#### 当前表结构 (packages/data-access/sql/schema.sql)
+
+```sql
+-- 资产表
+CREATE TABLE IF NOT EXISTS assets (
+  id TEXT PRIMARY KEY,
+  userId TEXT NOT NULL DEFAULT 'default',
+  name TEXT NOT NULL,
+  type TEXT NOT NULL,
+  currency TEXT NOT NULL,
+  amount DOUBLE PRECISION NOT NULL,
+  includeInFire INTEGER NOT NULL DEFAULT 1,
+  accountId TEXT,
+  quantity DOUBLE PRECISION,
+  unitPrice DOUBLE PRECISION,
+  interestRate DOUBLE PRECISION,
+  startDate TEXT,
+  endDate TEXT,
+  valuationMethod TEXT NOT NULL DEFAULT 'cost',
+  updatedAt TEXT NOT NULL,
+  createdAt TEXT NOT NULL,
+  notes TEXT
+);
+
+-- 负债表
+CREATE TABLE IF NOT EXISTS liabilities (
+  id TEXT PRIMARY KEY,
+  userId TEXT NOT NULL DEFAULT 'default',
+  name TEXT NOT NULL,
+  type TEXT NOT NULL,
+  currency TEXT NOT NULL,
+  balance DOUBLE PRECISION NOT NULL,
+  interestRate DOUBLE PRECISION,
+  startDate TEXT,
+  endDate TEXT,
+  updatedAt TEXT NOT NULL,
+  createdAt TEXT NOT NULL,
+  notes TEXT
+);
+
+-- 其他表...
+
+-- 初始数据
+INSERT OR IGNORE INTO fireConfig (id, annualExpense, swr, updatedAt, createdAt) 
+VALUES ('default', 0, 4, datetime('now'), datetime('now'));
+
+INSERT OR IGNORE INTO userSettings (id, baseCurrency, privacyMode, updatedAt, createdAt) 
+VALUES ('default', 'CNY', 0, datetime('now'), datetime('now'));
+```
+
+### 3. 架构变更说明
+
+#### 旧方式（已废弃）
+```typescript
+// 程序启动时自动创建表
+const dbManager = DatabaseManager.getInstance(adapter);
+await dbManager.initialize(); // 自动执行 DDL
+```
+
+#### 新方式（当前）
+```typescript
+// 程序直接使用数据库，假设表结构已存在
+const dbManager = DatabaseManager.getInstance(adapter);
+// 不再调用 initialize()，直接进行业务操作
+```
+
+#### 变更原因
+1. **职责分离**: 数据库 Schema 管理由 DBA/运维负责，程序只负责业务数据
+2. **版本控制**: SQL 文件便于版本控制和代码审查
+3. **迁移管理**: 便于使用专业的数据库迁移工具
+4. **安全性**: 避免程序意外修改表结构
+
+### 4. 数据库适配器
 
 #### 统一接口定义
 ```typescript
@@ -501,14 +588,15 @@ EXPLAIN QUERY PLAN SELECT * FROM assets WHERE user_id = 'xxx';
 ## 🔗 相关文件
 
 ### 核心文件
-- `packages/data-access/src/database/manager.ts` - 数据库管理器
+- `packages/data-access/src/database/manager.ts` - 数据库管理器（已移除 initialize 方法）
 - `packages/data-access/src/database/adapter.ts` - 数据库适配器接口
 - `packages/data-access/src/repositories/` - 数据仓库实现
-- `apps/web/lib/database.ts` - Web端数据库配置
-- `apps/mobile/lib/db.ts` - 移动端数据库配置
+- `apps/web/lib/database.ts` - Web端数据库配置（已移除 initializeDatabase）
+- `apps/mobile/lib/db.ts` - 移动端数据库配置（已移除 initDatabase）
 
-### 初始化文件
-- `packages/data-access/src/database/init.sql` - 数据库初始化脚本
+### Schema 文件
+- `packages/data-access/sql/schema.sql` - 数据库 Schema 定义文件（人工执行）
+- `scripts/init-db.mjs` - 数据库初始化脚本（读取 SQL 文件并执行）
 - `packages/utils/src/mockData.ts` - 演示数据生成器
 
 ---

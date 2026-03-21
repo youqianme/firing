@@ -1,8 +1,4 @@
-import { initializeDatabase } from '../../../../lib/database';
 import { assetRepository, activityRepository } from '../../../../lib/dataAccess';
-
-// 初始化数据库
-initializeDatabase();
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const userId = request.headers.get('x-user-id') || 'demo';

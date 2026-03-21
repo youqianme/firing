@@ -26,7 +26,7 @@ export const assetRepository = {
   // 获取所有资产
   getAll: async (userId: string): Promise<Asset[]> => {
     const adapter = getAdapter();
-    const rows = await adapter.execute('SELECT * FROM assets WHERE userId = ? ORDER BY updatedAt DESC', [userId]);
+    const rows = await adapter.execute('SELECT * FROM assets WHERE user_id = ? ORDER BY updated_at DESC', [userId]);
     return rows.map(row => ({
       ...row,
       includeInFire: getProp(row, 'includeInFire') === 1,
@@ -46,7 +46,7 @@ export const assetRepository = {
   // 根据 ID 获取资产
   getById: async (userId: string, id: string): Promise<Asset | undefined> => {
     const adapter = getAdapter();
-    const row = await adapter.get('SELECT * FROM assets WHERE id = ? AND userId = ?', [id, userId]);
+    const row = await adapter.get('SELECT * FROM assets WHERE id = ? AND user_id = ?', [id, userId]);
     if (!row) return undefined;
     return {
       ...row,
@@ -78,7 +78,7 @@ export const assetRepository = {
 
     const adapter = getAdapter();
     await adapter.run(
-      `INSERT INTO assets (id, userId, name, type, currency, amount, includeInFire, accountId, quantity, unitPrice, interestRate, startDate, endDate, valuationMethod, updatedAt, createdAt, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO assets (id, user_id, name, type, currency, amount, include_in_fire, account_id, quantity, unit_price, interest_rate, start_date, end_date, valuation_method, updated_at, created_at, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [newAsset.id, userId, newAsset.name, newAsset.type, newAsset.currency, newAsset.amount, newAsset.includeInFire ? 1 : 0, newAsset.accountId, newAsset.quantity, newAsset.unitPrice, newAsset.interestRate, newAsset.startDate, newAsset.endDate, newAsset.valuationMethod, newAsset.updatedAt, newAsset.createdAt, newAsset.notes]
     );
 
@@ -99,7 +99,7 @@ export const assetRepository = {
 
     const adapter = getAdapter();
     await adapter.run(
-      `UPDATE assets SET name = ?, type = ?, currency = ?, amount = ?, includeInFire = ?, accountId = ?, quantity = ?, unitPrice = ?, interestRate = ?, startDate = ?, endDate = ?, valuationMethod = ?, updatedAt = ?, notes = ? WHERE id = ? AND userId = ?`,
+      `UPDATE assets SET name = ?, type = ?, currency = ?, amount = ?, include_in_fire = ?, account_id = ?, quantity = ?, unit_price = ?, interest_rate = ?, start_date = ?, end_date = ?, valuation_method = ?, updated_at = ?, notes = ? WHERE id = ? AND user_id = ?`,
       [updatedAsset.name, updatedAsset.type, updatedAsset.currency, updatedAsset.amount, updatedAsset.includeInFire ? 1 : 0, updatedAsset.accountId, updatedAsset.quantity, updatedAsset.unitPrice, updatedAsset.interestRate, updatedAsset.startDate, updatedAsset.endDate, updatedAsset.valuationMethod, updatedAsset.updatedAt, updatedAsset.notes, id, userId]
     );
 
@@ -109,14 +109,14 @@ export const assetRepository = {
   // 删除资产
   delete: async (userId: string, id: string): Promise<boolean> => {
     const adapter = getAdapter();
-    await adapter.run('DELETE FROM assets WHERE id = ? AND userId = ?', [id, userId]);
+    await adapter.run('DELETE FROM assets WHERE id = ? AND user_id = ?', [id, userId]);
     return true;
   },
 
   // 根据类型获取资产
   getByType: async (userId: string, type: string): Promise<Asset[]> => {
     const adapter = getAdapter();
-    const rows = await adapter.execute('SELECT * FROM assets WHERE type = ? AND userId = ? ORDER BY updatedAt DESC', [type, userId]);
+    const rows = await adapter.execute('SELECT * FROM assets WHERE type = ? AND user_id = ? ORDER BY updated_at DESC', [type, userId]);
     return rows.map(row => ({
       ...row,
       includeInFire: getProp(row, 'includeInFire') === 1,
@@ -136,7 +136,7 @@ export const assetRepository = {
   // 根据账户获取资产
   getByAccountId: async (userId: string, accountId: string): Promise<Asset[]> => {
     const adapter = getAdapter();
-    const rows = await adapter.execute('SELECT * FROM assets WHERE accountId = ? AND userId = ? ORDER BY updatedAt DESC', [accountId, userId]);
+    const rows = await adapter.execute('SELECT * FROM assets WHERE account_id = ? AND user_id = ? ORDER BY updated_at DESC', [accountId, userId]);
     return rows.map(row => ({
       ...row,
       includeInFire: getProp(row, 'includeInFire') === 1,
@@ -159,7 +159,7 @@ export const liabilityRepository = {
   // 获取所有负债
   getAll: async (userId: string): Promise<Liability[]> => {
     const adapter = getAdapter();
-    const rows = await adapter.execute('SELECT * FROM liabilities WHERE userId = ? ORDER BY updatedAt DESC', [userId]);
+    const rows = await adapter.execute('SELECT * FROM liabilities WHERE user_id = ? ORDER BY updated_at DESC', [userId]);
     return rows.map(row => ({
       ...row,
       interestRate: getProp(row, 'interestRate'),
@@ -174,7 +174,7 @@ export const liabilityRepository = {
   // 根据 ID 获取负债
   getById: async (userId: string, id: string): Promise<Liability | undefined> => {
     const adapter = getAdapter();
-    const row = await adapter.get('SELECT * FROM liabilities WHERE id = ? AND userId = ?', [id, userId]);
+    const row = await adapter.get('SELECT * FROM liabilities WHERE id = ? AND user_id = ?', [id, userId]);
     if (!row) return undefined;
     return {
       ...row,
@@ -201,7 +201,7 @@ export const liabilityRepository = {
 
     const adapter = getAdapter();
     await adapter.run(
-      `INSERT INTO liabilities (id, userId, name, type, currency, balance, interestRate, startDate, endDate, updatedAt, createdAt, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO liabilities (id, user_id, name, type, currency, balance, interest_rate, start_date, end_date, updated_at, created_at, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [newLiability.id, userId, newLiability.name, newLiability.type, newLiability.currency, newLiability.balance, newLiability.interestRate, newLiability.startDate, newLiability.endDate, newLiability.updatedAt, newLiability.createdAt, newLiability.notes]
     );
 
@@ -222,7 +222,7 @@ export const liabilityRepository = {
 
     const adapter = getAdapter();
     await adapter.run(
-      `UPDATE liabilities SET name = ?, type = ?, currency = ?, balance = ?, interestRate = ?, startDate = ?, endDate = ?, updatedAt = ?, notes = ? WHERE id = ? AND userId = ?`,
+      `UPDATE liabilities SET name = ?, type = ?, currency = ?, balance = ?, interest_rate = ?, start_date = ?, end_date = ?, updated_at = ?, notes = ? WHERE id = ? AND user_id = ?`,
       [updatedLiability.name, updatedLiability.type, updatedLiability.currency, updatedLiability.balance, updatedLiability.interestRate, updatedLiability.startDate, updatedLiability.endDate, updatedLiability.updatedAt, updatedLiability.notes, id, userId]
     );
 
@@ -232,7 +232,7 @@ export const liabilityRepository = {
   // 删除负债
   delete: async (userId: string, id: string): Promise<boolean> => {
     const adapter = getAdapter();
-    await adapter.run('DELETE FROM liabilities WHERE id = ? AND userId = ?', [id, userId]);
+    await adapter.run('DELETE FROM liabilities WHERE id = ? AND user_id = ?', [id, userId]);
     return true;
   }
 };
@@ -242,7 +242,7 @@ export const paymentRepository = {
   // 获取所有还款记录
   getAll: async (userId: string): Promise<Payment[]> => {
     const adapter = getAdapter();
-    const rows = await adapter.execute('SELECT * FROM payments WHERE userId = ? ORDER BY date DESC', [userId]);
+    const rows = await adapter.execute('SELECT * FROM payments WHERE user_id = ? ORDER BY date DESC', [userId]);
     return rows.map(row => ({
       ...row,
       liabilityId: getProp(row, 'liabilityId'),
@@ -253,7 +253,7 @@ export const paymentRepository = {
   // 根据负债 ID 获取还款记录
   getByLiabilityId: async (userId: string, liabilityId: string): Promise<Payment[]> => {
     const adapter = getAdapter();
-    const rows = await adapter.execute('SELECT * FROM payments WHERE liabilityId = ? AND userId = ? ORDER BY date DESC', [liabilityId, userId]);
+    const rows = await adapter.execute('SELECT * FROM payments WHERE liability_id = ? AND user_id = ? ORDER BY date DESC', [liabilityId, userId]);
     return rows.map(row => ({
       ...row,
       liabilityId: getProp(row, 'liabilityId'),
@@ -274,7 +274,7 @@ export const paymentRepository = {
 
     const adapter = getAdapter();
     await adapter.run(
-      `INSERT INTO payments (id, userId, liabilityId, amount, date, notes, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO payments (id, user_id, liability_id, amount, date, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [newPayment.id, userId, newPayment.liabilityId, newPayment.amount, newPayment.date, newPayment.notes, newPayment.createdAt]
     );
 
@@ -284,7 +284,7 @@ export const paymentRepository = {
   // 删除还款记录
   delete: async (userId: string, id: string): Promise<boolean> => {
     const adapter = getAdapter();
-    await adapter.run('DELETE FROM payments WHERE id = ? AND userId = ?', [id, userId]);
+    await adapter.run('DELETE FROM payments WHERE id = ? AND user_id = ?', [id, userId]);
     return true;
   }
 };
@@ -294,7 +294,7 @@ export const transactionRepository = {
   // 获取所有交易
   getAll: async (userId: string): Promise<Transaction[]> => {
     const adapter = getAdapter();
-    const rows = await adapter.execute('SELECT * FROM transactions WHERE userId = ? ORDER BY date DESC', [userId]);
+    const rows = await adapter.execute('SELECT * FROM transactions WHERE user_id = ? ORDER BY date DESC', [userId]);
     return rows.map(row => ({
       ...row,
       fromAssetId: getProp(row, 'fromAssetId'),
@@ -306,7 +306,7 @@ export const transactionRepository = {
   // 根据 ID 获取交易
   getById: async (userId: string, id: string): Promise<Transaction | undefined> => {
     const adapter = getAdapter();
-    const row = await adapter.get('SELECT * FROM transactions WHERE id = ? AND userId = ?', [id, userId]);
+    const row = await adapter.get('SELECT * FROM transactions WHERE id = ? AND user_id = ?', [id, userId]);
     if (!row) return undefined;
     return {
       ...row,
@@ -329,7 +329,7 @@ export const transactionRepository = {
 
     const adapter = getAdapter();
     await adapter.run(
-      `INSERT INTO transactions (id, userId, type, fromAssetId, toAssetId, amount, currency, fee, date, notes, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO transactions (id, user_id, type, from_asset_id, to_asset_id, amount, currency, fee, date, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [newTransaction.id, userId, newTransaction.type, newTransaction.fromAssetId, newTransaction.toAssetId, newTransaction.amount, newTransaction.currency, newTransaction.fee || 0, newTransaction.date, newTransaction.notes, newTransaction.createdAt]
     );
 
@@ -339,7 +339,7 @@ export const transactionRepository = {
   // 删除交易
   delete: async (userId: string, id: string): Promise<boolean> => {
     const adapter = getAdapter();
-    await adapter.run('DELETE FROM transactions WHERE id = ? AND userId = ?', [id, userId]);
+    await adapter.run('DELETE FROM transactions WHERE id = ? AND user_id = ?', [id, userId]);
     return true;
   }
 };
@@ -349,7 +349,7 @@ export const accountRepository = {
   // 获取所有账户
   getAll: async (userId: string): Promise<Account[]> => {
     const adapter = getAdapter();
-    const rows = await adapter.execute('SELECT * FROM accounts WHERE userId = ? ORDER BY createdAt DESC', [userId]);
+    const rows = await adapter.execute('SELECT * FROM accounts WHERE user_id = ? ORDER BY created_at DESC', [userId]);
     return rows.map(row => ({
       ...row,
       createdAt: getProp(row, 'createdAt')
@@ -359,7 +359,7 @@ export const accountRepository = {
   // 根据 ID 获取账户
   getById: async (userId: string, id: string): Promise<Account | undefined> => {
     const adapter = getAdapter();
-    const row = await adapter.get('SELECT * FROM accounts WHERE id = ? AND userId = ?', [id, userId]);
+    const row = await adapter.get('SELECT * FROM accounts WHERE id = ? AND user_id = ?', [id, userId]);
     if (!row) return undefined;
     return {
       ...row,
@@ -380,7 +380,7 @@ export const accountRepository = {
 
     const adapter = getAdapter();
     await adapter.run(
-      `INSERT INTO accounts (id, userId, name, type, currency, createdAt, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO accounts (id, user_id, name, type, currency, created_at, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [newAccount.id, userId, newAccount.name, newAccount.type, newAccount.currency, newAccount.createdAt, newAccount.notes]
     );
 
@@ -399,7 +399,7 @@ export const accountRepository = {
 
     const adapter = getAdapter();
     await adapter.run(
-      `UPDATE accounts SET name = ?, type = ?, currency = ?, notes = ? WHERE id = ? AND userId = ?`,
+      `UPDATE accounts SET name = ?, type = ?, currency = ?, notes = ? WHERE id = ? AND user_id = ?`,
       [updatedAccount.name, updatedAccount.type, updatedAccount.currency, updatedAccount.notes, id, userId]
     );
 
@@ -409,7 +409,7 @@ export const accountRepository = {
   // 删除账户
   delete: async (userId: string, id: string): Promise<boolean> => {
     const adapter = getAdapter();
-    await adapter.run('DELETE FROM accounts WHERE id = ? AND userId = ?', [id, userId]);
+    await adapter.run('DELETE FROM accounts WHERE id = ? AND user_id = ?', [id, userId]);
     return true;
   }
 };
@@ -419,7 +419,7 @@ export const marketDataRepository = {
   // 获取所有市场数据
   getAll: async (): Promise<MarketData[]> => {
     const adapter = getAdapter();
-    const rows = await adapter.execute('SELECT * FROM marketData ORDER BY symbol', []);
+    const rows = await adapter.execute('SELECT * FROM market_data ORDER BY symbol', []);
     return rows.map(row => ({
       ...row,
       updatedAt: getProp(row, 'updatedAt')
@@ -429,7 +429,7 @@ export const marketDataRepository = {
   // 根据符号获取市场数据
   getBySymbol: async (symbol: string): Promise<MarketData | undefined> => {
     const adapter = getAdapter();
-    const row = await adapter.get('SELECT * FROM marketData WHERE symbol = ?', [symbol]);
+    const row = await adapter.get('SELECT * FROM market_data WHERE symbol = ?', [symbol]);
     if (!row) return undefined;
     return {
       ...row,
@@ -445,7 +445,7 @@ export const marketDataRepository = {
 
     if (existing) {
       await adapter.run(
-        `UPDATE marketData SET price = ?, updatedAt = ?, source = ? WHERE symbol = ?`,
+        `UPDATE market_data SET price = ?, updated_at = ?, source = ? WHERE symbol = ?`,
         [price, now, source, symbol]
       );
 
@@ -466,7 +466,7 @@ export const marketDataRepository = {
       };
 
       await adapter.run(
-        `INSERT INTO marketData (id, symbol, price, updatedAt, source) VALUES (?, ?, ?, ?, ?)`,
+        `INSERT INTO market_data (id, symbol, price, updated_at, source) VALUES (?, ?, ?, ?, ?)`,
         [newMarketData.id, newMarketData.symbol, newMarketData.price, newMarketData.updatedAt, newMarketData.source]
       );
 
@@ -480,7 +480,7 @@ export const activityRepository = {
   // 获取所有活动
   getAll: async (userId: string, limit: number = 50, offset: number = 0): Promise<Activity[]> => {
     const adapter = getAdapter();
-    const rows = await adapter.execute('SELECT * FROM activities WHERE userId = ? ORDER BY createdAt DESC LIMIT ? OFFSET ?', [userId, limit, offset]);
+    const rows = await adapter.execute('SELECT * FROM activities WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?', [userId, limit, offset]);
     return rows.map(row => ({
       ...row,
       objectType: getProp(row, 'objectType'),
@@ -494,7 +494,7 @@ export const activityRepository = {
   // 根据对象类型获取活动
   getByObjectType: async (userId: string, objectType: string, limit: number = 50, offset: number = 0): Promise<Activity[]> => {
     const adapter = getAdapter();
-    const rows = await adapter.execute('SELECT * FROM activities WHERE objectType = ? AND userId = ? ORDER BY createdAt DESC LIMIT ? OFFSET ?', [objectType, userId, limit, offset]);
+    const rows = await adapter.execute('SELECT * FROM activities WHERE object_type = ? AND user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?', [objectType, userId, limit, offset]);
     return rows.map(row => ({
       ...row,
       objectType: getProp(row, 'objectType'),
@@ -518,7 +518,7 @@ export const activityRepository = {
 
     const adapter = getAdapter();
     await adapter.run(
-      `INSERT INTO activities (id, userId, action, objectType, objectId, objectName, amount, currency, oldAmount, delta, notes, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO activities (id, user_id, action, object_type, object_id, object_name, amount, currency, old_amount, delta, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [newActivity.id, userId, newActivity.action, newActivity.objectType, newActivity.objectId, newActivity.objectName, newActivity.amount, newActivity.currency, newActivity.oldAmount, newActivity.delta, newActivity.notes, newActivity.createdAt]
     );
 
@@ -531,7 +531,7 @@ export const fireConfigRepository = {
   // 获取 FIRE 配置
   get: async (userId: string): Promise<FireConfig> => {
     const adapter = getAdapter();
-    const row = await adapter.get('SELECT * FROM fireConfig WHERE id = ? ORDER BY updatedAt DESC LIMIT 1', [userId]);
+    const row = await adapter.get('SELECT * FROM fire_config WHERE id = ? ORDER BY updated_at DESC LIMIT 1', [userId]);
     if (!row) {
       return {
         id: userId,
@@ -557,7 +557,7 @@ export const fireConfigRepository = {
 
     if (existing) {
       await adapter.run(
-        `UPDATE fireConfig SET annualExpense = ?, swr = ?, updatedAt = ? WHERE id = ?`,
+        `UPDATE fire_config SET annual_expense = ?, swr = ?, updated_at = ? WHERE id = ?`,
         [config.annualExpense, config.swr, now, userId]
       );
 
@@ -576,7 +576,7 @@ export const fireConfigRepository = {
       };
 
       await adapter.run(
-        `INSERT INTO fireConfig (id, annualExpense, swr, updatedAt, createdAt) VALUES (?, ?, ?, ?, ?)`,
+        `INSERT INTO fire_config (id, annual_expense, swr, updated_at, created_at) VALUES (?, ?, ?, ?, ?)`,
         [newConfig.id, newConfig.annualExpense, newConfig.swr, newConfig.updatedAt, newConfig.createdAt]
       );
 
@@ -590,7 +590,7 @@ export const userSettingsRepository = {
   // 获取用户设置
   get: async (userId: string): Promise<UserSettings> => {
     const adapter = getAdapter();
-    const row = await adapter.get('SELECT * FROM userSettings WHERE id = ? LIMIT 1', [userId]);
+    const row = await adapter.get('SELECT * FROM user_settings WHERE id = ? LIMIT 1', [userId]);
     if (!row) {
       return {
         id: userId,
@@ -612,7 +612,7 @@ export const userSettingsRepository = {
   // 更新用户设置
   update: async (userId: string, settings: Partial<UserSettings>): Promise<UserSettings> => {
     const adapter = getAdapter();
-    const existingRow = await adapter.get('SELECT * FROM userSettings WHERE id = ?', [userId]);
+    const existingRow = await adapter.get('SELECT * FROM user_settings WHERE id = ?', [userId]);
     const now = new Date().toISOString();
 
     if (existingRow) {
@@ -626,7 +626,7 @@ export const userSettingsRepository = {
       };
 
       await adapter.run(
-        `UPDATE userSettings SET baseCurrency = ?, privacyMode = ?, updatedAt = ? WHERE id = ?`,
+        `UPDATE user_settings SET base_currency = ?, privacy_mode = ?, updated_at = ? WHERE id = ?`,
         [updatedSettings.baseCurrency, updatedSettings.privacyMode ? 1 : 0, updatedSettings.updatedAt, userId]
       );
       
@@ -646,7 +646,7 @@ export const userSettingsRepository = {
       };
 
       await adapter.run(
-        `INSERT INTO userSettings (id, baseCurrency, privacyMode, updatedAt, createdAt) VALUES (?, ?, ?, ?, ?)`,
+        `INSERT INTO user_settings (id, base_currency, privacy_mode, updated_at, created_at) VALUES (?, ?, ?, ?, ?)`,
         [newSettings.id, newSettings.baseCurrency, newSettings.privacyMode ? 1 : 0, newSettings.updatedAt, newSettings.createdAt]
       );
       

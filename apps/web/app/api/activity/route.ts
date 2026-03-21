@@ -1,9 +1,7 @@
-import { initializeDatabase } from '../../../lib/database';
 import { activityRepository } from '../../../lib/dataAccess';
 
 export async function GET(request: Request) {
   const userId = request.headers.get('x-user-id') || 'demo';
-  await initializeDatabase();
   try {
     const url = new URL(request.url);
     const filter = url.searchParams.get('filter') || 'ALL';

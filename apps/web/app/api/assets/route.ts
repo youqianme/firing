@@ -1,4 +1,3 @@
-import { initializeDatabase } from '../../../lib/database';
 import {
   assetRepository,
   activityRepository
@@ -6,8 +5,6 @@ import {
 
 export async function GET(request: Request) {
   const userId = request.headers.get('x-user-id') || 'demo';
-  // 确保数据库已初始化
-  await initializeDatabase();
   try {
     const assets = await assetRepository.getAll(userId);
     return new Response(JSON.stringify(assets), {
@@ -28,8 +25,6 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const userId = request.headers.get('x-user-id') || 'demo';
-  // 确保数据库已初始化
-  await initializeDatabase();
   try {
     const assetData = await request.json();
     const newAsset = await assetRepository.create(userId, assetData);
