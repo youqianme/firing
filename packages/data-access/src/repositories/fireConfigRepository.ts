@@ -104,9 +104,10 @@ export class FireConfigRepository {
    * 计算FIRE相关数据
    * @param config FIRE配置
    * @param currentFireAssets 当前FIRE资产
+   * @param totalLiabilities 总负债
    * @returns FIRE计算结果
    */
-  calculateFireMetrics(config: FireConfig, currentFireAssets: number): FireCalculation {
+  calculateFireMetrics(config: FireConfig, currentFireAssets: number, totalLiabilities: number = 0): FireCalculation {
     // 计算距离退休的月数
     const monthsToRetirement = this.calculateMonthsToRetirement(config);
 
@@ -120,10 +121,26 @@ export class FireConfigRepository {
     // 计算距离目标的差额
     const fireGap = totalNeeded - currentFireAssets;
 
+    // 计算净资产
+    const netWorth = currentFireAssets - totalLiabilities;
+
     return {
-      monthsToRetirement,
+      members: [{
+        memberId: config.id,
+        name: '默认成员',
+        gender: 'male',
+        birthDate: config.birthDate,
+        retirementAge: config.retirementAge,
+        monthsToRetirement,
+        monthlyExpense: config.monthlyExpense,
+        targetRetirementAsset: config.targetRetirementAsset,
+        personalTotalNeeded: totalNeeded
+      }],
+      totalMonthlyExpense: config.monthlyExpense,
       totalNeeded,
       currentFireAssets,
+      totalLiabilities,
+      netWorth,
       fireProgress,
       fireGap
     };

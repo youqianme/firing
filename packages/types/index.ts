@@ -139,3 +139,14 @@ export interface UserSettings {
   updatedAt: string;
   createdAt: string;
 }
+
+// FIRE配置类型（向后兼容）
+export interface FireConfig {
+  id: string;
+  monthlyExpense: number;
+  targetRetirementAsset: number;
+  birthDate: string;
+  retirementAge: number;
+  updatedAt: string;
+  createdAt: string;
+}
