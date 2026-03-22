@@ -1,4 +1,4 @@
-import { Asset, Liability, FireConfig, UserSettings, Account, Transaction, Payment, MarketData } from '@firing/types';
+import { Asset, Liability, FireMember, UserSettings, Account, Transaction, Payment, MarketData } from '@firing/types';
 
 // 生成日期
 const generateDate = (daysAgo: number) => {
@@ -225,13 +225,32 @@ export const mockMarketData: MarketData[] = [
   { id: 'demo-market-3', symbol: 'EURCNY', price: 7.85, updatedAt: generateDate(1), source: 'MANUAL' }
 ];
 
-export const mockFireConfig: FireConfig = {
-  id: 'demo',
-  annualExpense: 180000,
-  swr: 4.0,
-  updatedAt: generateDate(1),
-  createdAt: generateDate(365),
-};
+export const mockFireMembers: FireMember[] = [
+  {
+    id: 'demo-member-1',
+    userId: 'demo',
+    name: '小明',
+    gender: 'male',
+    birthDate: '1990-01-01',
+    retirementAge: 60,
+    monthlyExpense: 10000,
+    targetRetirementAsset: 0,
+    updatedAt: generateDate(1),
+    createdAt: generateDate(365),
+  },
+  {
+    id: 'demo-member-2',
+    userId: 'demo',
+    name: '小红',
+    gender: 'female',
+    birthDate: '1992-06-15',
+    retirementAge: 55,
+    monthlyExpense: 8000,
+    targetRetirementAsset: 0,
+    updatedAt: generateDate(1),
+    createdAt: generateDate(365),
+  }
+];
 
 export const mockUserSettings: UserSettings = {
   id: 'demo',

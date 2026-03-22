@@ -1,24 +1,25 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { Area, AreaChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line, ComposedChart } from 'recharts';
 import { useUser } from './context/UserContext';
 import { convertCurrency, formatCurrency, Currency } from '@firing/utils';
 import { formatDate } from '@firing/utils';
-import { Asset, Liability, Activity, FireConfig } from '@firing/types';
+import { Asset, Liability, Activity, FireCalculation } from '@firing/types';
 
 export default function Home() {
   const { userId } = useUser();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [liabilities, setLiabilities] = useState<Liability[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [fireConfig, setFireConfig] = useState<FireConfig | null>(null);
+  const [fireData, setFireData] = useState<{ members: any[]; calculation: FireCalculation } | null>(null);
   const [totalAssets, setTotalAssets] = useState(0);
   const [totalLiabilities, setTotalLiabilities] = useState(0);
   const [netWorth, setNetWorth] = useState(0);
   const [baseCurrency, setBaseCurrency] = useState<Currency>('CNY');
   const [isLoading, setIsLoading] = useState(true);
   const [missingRates, setMissingRates] = useState<string[]>([]);
+  const [timeRange, setTimeRange] = useState<6 | 12 | 24 | 36 | 60 | 120>(12); // 月份范围
 
   // 获取活动类型文本
   function getActivityActionText(action: string): string {
@@ -80,7 +81,7 @@ export default function Home() {
           setAssets(safeAssets);
           setLiabilities(safeLiabilities);
           setActivities(safeActivities);
-          setFireConfig(loadedFireConfig);
+          setFireData(loadedFireConfig);
 
           // 计算核心指标
           calculateMetrics(safeAssets, safeLiabilities, baseCurrency);
@@ -160,49 +161,76 @@ export default function Home() {
 
   // 计算 FIRE 相关数据
   const fireMetrics = useMemo(() => {
-    if (!fireConfig) return null;
+    if (!fireData?.calculation) return null;
 
-    const target = fireConfig.annualExpense / fireConfig.swr;
-    
-    let current = 0;
-    for (const asset of assets) {
-      if (asset.includeInFire) {
-        current += convertCurrency(asset.amount, asset.currency, baseCurrency);
-      }
-    }
-
-    const progress = target > 0 ? Math.min(100, (current / target) * 100) : 0;
-    const gap = target - current;
+    const calculation = fireData.calculation;
+    const target = calculation.totalNeeded;
+    const current = calculation.currentFireAssets;
+    const progress = calculation.fireProgress;
+    const gap = calculation.fireGap;
 
     return {
       target,
       current,
       progress,
-      gap
+      gap,
+      totalMonthlyExpense: calculation.totalMonthlyExpense
     };
-  }, [assets, fireConfig, baseCurrency]);
+  }, [fireData]);
 
-  // 生成趋势图数据
+  // 生成趋势图数据 - 按月计算，基于资产和负债的实际创建时间
   const trendData = useMemo(() => {
-    // 这里简化处理，实际应该从数据库获取历史数据
     const today = new Date();
     const data = [];
 
-    for (let i = 30; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      
-      // 模拟数据，实际应该从历史记录计算
-      const value = netWorth * (0.9 + Math.random() * 0.2);
-      
+    // 生成月份数据（从今天往前 timeRange 个月）
+    for (let i = timeRange; i >= 0; i--) {
+      const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      date.setHours(0, 0, 0, 0);
+
+      // 获取该月的最后一天
+      const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+      monthEnd.setHours(23, 59, 59, 999);
+
+      const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+      // 计算该月月底时已创建的资产总额
+      let assetsValue = 0;
+      for (const asset of assets) {
+        const assetStartDate = asset.startDate || asset.createdAt;
+        if (assetStartDate) {
+          const assetDate = new Date(assetStartDate);
+          if (assetDate <= monthEnd) {
+            assetsValue += convertCurrency(asset.amount, asset.currency, baseCurrency);
+          }
+        }
+      }
+
+      // 计算该月月底时已创建的负债总额
+      let liabilitiesValue = 0;
+      for (const liability of liabilities) {
+        const liabilityStartDate = liability.startDate || liability.createdAt;
+        if (liabilityStartDate) {
+          const liabilityDate = new Date(liabilityStartDate);
+          if (liabilityDate <= monthEnd) {
+            liabilitiesValue += convertCurrency(liability.balance, liability.currency, baseCurrency);
+          }
+        }
+      }
+
+      const netWorthValue = assetsValue - liabilitiesValue;
+
       data.push({
-        date: date.toISOString().split('T')[0],
-        value
+        date: dateStr,
+        assets: Math.max(0, Math.round(assetsValue)),
+        liabilities: Math.max(0, Math.round(liabilitiesValue)),
+        liabilitiesNegative: -Math.max(0, Math.round(liabilitiesValue)),
+        netWorth: Math.round(netWorthValue)
       });
     }
 
     return data;
-  }, [netWorth]);
+  }, [assets, liabilities, baseCurrency, timeRange]);
 
   if (isLoading) {
     return (
@@ -308,15 +336,15 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-slate-200 transition-colors">
-                  <div className="text-xs font-medium text-slate-500 mb-1 uppercase tracking-wider">年度支出</div>
+                  <div className="text-xs font-medium text-slate-500 mb-1 uppercase tracking-wider">月度支出</div>
                   <div className="font-bold text-slate-900 text-lg">
-                    {formatCurrency(fireConfig?.annualExpense || 0, baseCurrency)}
+                    {formatCurrency(fireMetrics.totalMonthlyExpense || 0, baseCurrency)}
                   </div>
                 </div>
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-slate-200 transition-colors">
-                  <div className="text-xs font-medium text-slate-500 mb-1 uppercase tracking-wider">安全提取率</div>
+                  <div className="text-xs font-medium text-slate-500 mb-1 uppercase tracking-wider">总需求</div>
                   <div className="font-bold text-slate-900 text-lg">
-                    {((fireConfig?.swr || 0.04) * 100).toFixed(1)}%
+                    {formatCurrency(fireMetrics.target, baseCurrency)}
                   </div>
                 </div>
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-slate-200 transition-colors">
@@ -330,41 +358,152 @@ export default function Home() {
           </div>
         )}
 
-        {/* 净资产趋势图 */}
+        {/* 资产负债趋势图 */}
         <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm mb-8">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">净资产趋势</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-slate-900">资产负债趋势</h2>
+            <div className="flex items-center space-x-4">
+              {/* 时间范围选择器 */}
+              <div className="flex items-center space-x-2 bg-slate-100 rounded-lg p-1">
+                {[6, 12, 24, 36, 60, 120].map((months) => (
+                  <button
+                    key={months}
+                    onClick={() => setTimeRange(months as 6 | 12 | 24 | 36 | 60 | 120)}
+                    className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                      timeRange === months
+                        ? 'bg-white text-slate-900 shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    {months >= 12 ? `${months / 12}年` : `${months}个月`}
+                  </button>
+                ))}
+              </div>
+              {/* 图例 */}
+              <div className="flex items-center space-x-4 text-sm">
+                <div className="flex items-center">
+                  <span className="w-3 h-3 rounded-full bg-emerald-500 mr-2"></span>
+                  <span className="text-slate-600">资产</span>
+                </div>
+                <div className="flex items-center">
+                  <span className="w-3 h-3 rounded-full bg-rose-500 mr-2"></span>
+                  <span className="text-slate-600">负债</span>
+                </div>
+                <div className="flex items-center">
+                  <span className="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
+                  <span className="text-slate-600">净资产</span>
+                </div>
+              </div>
+            </div>
+          </div>
           <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-              <AreaChart data={trendData}>
+              <ComposedChart data={trendData}>
                 <defs>
-                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.1}/>
+                  <linearGradient id="colorAssets" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#10B981" stopOpacity={0.05}/>
+                  </linearGradient>
+                  <linearGradient id="colorLiabilities" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#F43F5E" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#F43F5E" stopOpacity={0.05}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-                <XAxis 
-                  dataKey="date" 
-                  tick={{ fontSize: 12 }} 
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 12 }}
                   stroke="#64748B"
+                  tickFormatter={(value) => {
+                    // value 格式为 "YYYY-MM"
+                    const [year, month] = value.split('-');
+                    return `${year}年${month}月`;
+                  }}
                 />
                 <YAxis 
                   tick={{ fontSize: 12 }} 
                   stroke="#64748B"
-                  tickFormatter={(value) => formatCurrency(value, baseCurrency).replace(/[^0-9]/g, '')}
+                  tickFormatter={(value) => {
+                    if (value >= 10000) {
+                      return `${(value / 10000).toFixed(0)}万`;
+                    }
+                    return value.toString();
+                  }}
                 />
                 <Tooltip 
-                  formatter={(value) => [formatCurrency(value as number, baseCurrency), '净资产']}
-                  labelFormatter={(label) => formatDate(label)}
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg">
+                          <p className="text-sm font-medium text-slate-900 mb-2">{label as string}</p>
+                          {payload.map((entry, index) => {
+                            const nameMap: Record<string, string> = {
+                              assets: '资产',
+                              liabilities: '负债',
+                              liabilitiesNegative: '负债',
+                              netWorth: '净资产'
+                            };
+                            const colorMap: Record<string, string> = {
+                              assets: '#10B981',
+                              liabilities: '#F43F5E',
+                              liabilitiesNegative: '#F43F5E',
+                              netWorth: '#3B82F6'
+                            };
+                            // 负债显示为正值
+                            const displayValue = entry.dataKey === 'liabilitiesNegative'
+                              ? Math.abs(entry.value as number)
+                              : (entry.value as number);
+                            return (
+                              <p key={index} className="text-sm flex items-center justify-between gap-4">
+                                <span className="flex items-center">
+                                  <span
+                                    className="w-2 h-2 rounded-full mr-2"
+                                    style={{ backgroundColor: colorMap[entry.dataKey as string] }}
+                                  ></span>
+                                  <span className="text-slate-600">{nameMap[entry.dataKey as string]}</span>
+                                </span>
+                                <span className="font-medium" style={{ color: colorMap[entry.dataKey as string] }}>
+                                  {formatCurrency(displayValue, baseCurrency)}
+                                </span>
+                              </p>
+                            );
+                          })}
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="value" 
-                  stroke="#3B82F6" 
-                  fillOpacity={1} 
-                  fill="url(#colorValue)" 
+                {/* 资产面积图 - 正值堆叠 */}
+                <Area
+                  type="monotone"
+                  dataKey="assets"
+                  stroke="#10B981"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorAssets)"
+                  stackId="stack"
                 />
-              </AreaChart>
+                {/* 负债面积图 - 负值堆叠 */}
+                <Area
+                  type="monotone"
+                  dataKey="liabilitiesNegative"
+                  stroke="#F43F5E"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorLiabilities)"
+                  stackId="stack"
+                />
+                {/* 净资产基准线 */}
+                <Line
+                  type="monotone"
+                  dataKey="netWorth"
+                  stroke="#3B82F6"
+                  strokeWidth={3}
+                  dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, stroke: '#3B82F6', strokeWidth: 2 }}
+                />
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
         </div>

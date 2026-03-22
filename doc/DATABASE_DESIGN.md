@@ -199,8 +199,60 @@ CREATE INDEX idx_transactions_category ON transactions(category);
 
 ### 5. FIRE目标管理
 
-#### FIRE配置表 (fire_config)
+#### FIRE成员表 (fire_members)
 ```sql
+CREATE TABLE fire_members (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL DEFAULT 'default',
+    name TEXT NOT NULL,                        -- 成员姓名
+    gender TEXT NOT NULL DEFAULT 'male',       -- 性别：male/female
+    birth_date TEXT NOT NULL,                  -- 出生日期
+    retirement_age INTEGER NOT NULL DEFAULT 60, -- 退休年龄（根据性别自动估算，但可手动修改）
+    monthly_expense DOUBLE PRECISION NOT NULL DEFAULT 0,  -- 每月支出
+    target_retirement_asset DOUBLE PRECISION NOT NULL DEFAULT 0,  -- 退休时目标资产
+    updated_at TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+```
+
+**字段说明**:
+- `id`: 成员唯一标识
+- `user_id`: 所属用户ID
+- `name`: 成员姓名
+- `gender`: 性别（male/female），用于自动估算退休年龄
+- `birth_date`: 出生日期，用于计算距离退休时间
+- `retirement_age`: 退休年龄，默认男60岁/女55岁，可手动修改
+- `monthly_expense`: 退休前每月希望从资产中提取的金额
+- `target_retirement_asset`: 退休时希望剩余的资产（最激进可为0）
+
+**计算逻辑**:
+```typescript
+// 根据性别估算退休年龄
+function getRetirementAgeByGender(gender: 'male' | 'female'): number {
+  return gender === 'male' ? 60 : 55;
+}
+
+// 计算距离退休月数
+function calculateMonthsToRetirement(birthDate: string, retirementAge: number): number
+
+// 个人所需 = 每月支出 × 距离退休月数 + 退休目标资产
+const personalTotalNeeded = monthlyExpense * monthsToRetirement + targetRetirementAsset;
+
+// 家庭总需求 = 所有成员个人所需之和
+const totalNeeded = members.reduce((sum, m) => sum + m.personalTotalNeeded, 0);
+
+// FIRE进度 = 净资产 / 家庭总需求
+const fireProgress = netWorth / totalNeeded;
+```
+
+**索引**:
+```sql
+CREATE INDEX idx_fire_members_user_id ON fire_members(user_id);
+```
+
+#### FIRE配置表 (fire_config) [已废弃]
+```sql
+-- 旧表结构，已被 fire_members 替代
 CREATE TABLE fire_config (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id TEXT NOT NULL UNIQUE,

@@ -8,60 +8,147 @@ import {
   Account,
   MarketData,
   Activity,
-  FireConfig,
+  FireMember,
   UserSettings
 } from '@firing/types';
 
 // 获取数据库适配器
 const getAdapter = () => dbManager.getAdapter();
 
-// Helper to handle case-insensitive property access for Postgres compatibility
-const getProp = (obj: any, key: string) => {
-  if (!obj) return undefined;
-  return obj[key] !== undefined ? obj[key] : obj[key.toLowerCase()];
-};
+// ==================== 转换函数 ====================
 
-// 资产相关操作
+// 资产转换函数
+const toAsset = (row: any): Asset => ({
+  id: row.id,
+  name: row.name,
+  type: row.type,
+  subType: row.sub_type,
+  currency: row.currency,
+  amount: row.amount,
+  includeInFire: row.include_in_fire === 1,
+  accountId: row.account_id,
+  quantity: row.quantity,
+  unitPrice: row.unit_price,
+  interestRate: row.interest_rate,
+  startDate: row.start_date,
+  endDate: row.end_date,
+  valuationMethod: row.valuation_method,
+  updatedAt: row.updated_at,
+  createdAt: row.created_at,
+  notes: row.notes,
+});
+
+// 负债转换函数
+const toLiability = (row: any): Liability => ({
+  id: row.id,
+  name: row.name,
+  type: row.type,
+  currency: row.currency,
+  balance: row.balance,
+  interestRate: row.interest_rate,
+  startDate: row.start_date,
+  endDate: row.end_date,
+  updatedAt: row.updated_at,
+  createdAt: row.created_at,
+  notes: row.notes,
+});
+
+// 还款记录转换函数
+const toPayment = (row: any): Payment => ({
+  id: row.id,
+  liabilityId: row.liability_id,
+  amount: row.amount,
+  date: row.date,
+  notes: row.notes,
+  createdAt: row.created_at,
+});
+
+// 交易转换函数
+const toTransaction = (row: any): Transaction => ({
+  id: row.id,
+  type: row.type,
+  fromAssetId: row.from_asset_id,
+  toAssetId: row.to_asset_id,
+  amount: row.amount,
+  currency: row.currency,
+  fee: row.fee,
+  date: row.date,
+  notes: row.notes,
+  createdAt: row.created_at,
+});
+
+// 账户转换函数
+const toAccount = (row: any): Account => ({
+  id: row.id,
+  name: row.name,
+  type: row.type,
+  currency: row.currency,
+  createdAt: row.created_at,
+  notes: row.notes,
+});
+
+// 市场数据转换函数
+const toMarketData = (row: any): MarketData => ({
+  id: row.id,
+  symbol: row.symbol,
+  price: row.price,
+  updatedAt: row.updated_at,
+  source: row.source,
+});
+
+// 活动转换函数
+const toActivity = (row: any): Activity => ({
+  id: row.id,
+  action: row.action,
+  objectType: row.object_type,
+  objectId: row.object_id,
+  objectName: row.object_name,
+  amount: row.amount,
+  currency: row.currency,
+  oldAmount: row.old_amount,
+  delta: row.delta,
+  notes: row.notes,
+  createdAt: row.created_at,
+});
+
+// FIRE成员转换函数
+const toFireMember = (row: any): FireMember => ({
+  id: row.id,
+  userId: row.user_id,
+  name: row.name,
+  gender: row.gender,
+  birthDate: row.birth_date,
+  retirementAge: row.retirement_age,
+  monthlyExpense: row.monthly_expense,
+  targetRetirementAsset: row.target_retirement_asset,
+  updatedAt: row.updated_at,
+  createdAt: row.created_at,
+});
+
+// 用户设置转换函数
+const toUserSettings = (row: any): UserSettings => ({
+  id: row.id,
+  baseCurrency: row.base_currency || 'CNY',
+  privacyMode: row.privacy_mode === 1,
+  updatedAt: row.updated_at,
+  createdAt: row.created_at,
+});
+
+// ==================== 资产相关操作 ====================
+
 export const assetRepository = {
   // 获取所有资产
   getAll: async (userId: string): Promise<Asset[]> => {
     const adapter = getAdapter();
     const rows = await adapter.execute('SELECT * FROM assets WHERE user_id = ? ORDER BY updated_at DESC', [userId]);
-    return rows.map(row => ({
-      ...row,
-      includeInFire: getProp(row, 'includeInFire') === 1,
-      accountId: getProp(row, 'accountId'),
-      quantity: getProp(row, 'quantity'),
-      unitPrice: getProp(row, 'unitPrice'),
-      interestRate: getProp(row, 'interestRate'),
-      startDate: getProp(row, 'startDate'),
-      endDate: getProp(row, 'endDate'),
-      valuationMethod: getProp(row, 'valuationMethod'),
-      updatedAt: getProp(row, 'updatedAt'),
-      createdAt: getProp(row, 'createdAt'),
-      notes: getProp(row, 'notes')
-    })) as Asset[];
+    return rows.map(toAsset);
   },
 
   // 根据 ID 获取资产
   getById: async (userId: string, id: string): Promise<Asset | undefined> => {
     const adapter = getAdapter();
     const row = await adapter.get('SELECT * FROM assets WHERE id = ? AND user_id = ?', [id, userId]);
-    if (!row) return undefined;
-    return {
-      ...row,
-      includeInFire: getProp(row, 'includeInFire') === 1,
-      accountId: getProp(row, 'accountId'),
-      quantity: getProp(row, 'quantity'),
-      unitPrice: getProp(row, 'unitPrice'),
-      interestRate: getProp(row, 'interestRate'),
-      startDate: getProp(row, 'startDate'),
-      endDate: getProp(row, 'endDate'),
-      valuationMethod: getProp(row, 'valuationMethod'),
-      updatedAt: getProp(row, 'updatedAt'),
-      createdAt: getProp(row, 'createdAt'),
-      notes: getProp(row, 'notes')
-    } as Asset;
+    return row ? toAsset(row) : undefined;
   },
 
   // 创建资产
@@ -78,8 +165,8 @@ export const assetRepository = {
 
     const adapter = getAdapter();
     await adapter.run(
-      `INSERT INTO assets (id, user_id, name, type, currency, amount, include_in_fire, account_id, quantity, unit_price, interest_rate, start_date, end_date, valuation_method, updated_at, created_at, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [newAsset.id, userId, newAsset.name, newAsset.type, newAsset.currency, newAsset.amount, newAsset.includeInFire ? 1 : 0, newAsset.accountId, newAsset.quantity, newAsset.unitPrice, newAsset.interestRate, newAsset.startDate, newAsset.endDate, newAsset.valuationMethod, newAsset.updatedAt, newAsset.createdAt, newAsset.notes]
+      `INSERT INTO assets (id, user_id, name, type, sub_type, currency, amount, include_in_fire, account_id, quantity, unit_price, interest_rate, start_date, end_date, valuation_method, updated_at, created_at, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [newAsset.id, userId, newAsset.name, newAsset.type, newAsset.subType, newAsset.currency, newAsset.amount, newAsset.includeInFire ? 1 : 0, newAsset.accountId, newAsset.quantity, newAsset.unitPrice, newAsset.interestRate, newAsset.startDate, newAsset.endDate, newAsset.valuationMethod, newAsset.updatedAt, newAsset.createdAt, newAsset.notes]
     );
 
     return newAsset as unknown as Asset;
@@ -99,8 +186,8 @@ export const assetRepository = {
 
     const adapter = getAdapter();
     await adapter.run(
-      `UPDATE assets SET name = ?, type = ?, currency = ?, amount = ?, include_in_fire = ?, account_id = ?, quantity = ?, unit_price = ?, interest_rate = ?, start_date = ?, end_date = ?, valuation_method = ?, updated_at = ?, notes = ? WHERE id = ? AND user_id = ?`,
-      [updatedAsset.name, updatedAsset.type, updatedAsset.currency, updatedAsset.amount, updatedAsset.includeInFire ? 1 : 0, updatedAsset.accountId, updatedAsset.quantity, updatedAsset.unitPrice, updatedAsset.interestRate, updatedAsset.startDate, updatedAsset.endDate, updatedAsset.valuationMethod, updatedAsset.updatedAt, updatedAsset.notes, id, userId]
+      `UPDATE assets SET name = ?, type = ?, sub_type = ?, currency = ?, amount = ?, include_in_fire = ?, account_id = ?, quantity = ?, unit_price = ?, interest_rate = ?, start_date = ?, end_date = ?, valuation_method = ?, updated_at = ?, notes = ? WHERE id = ? AND user_id = ?`,
+      [updatedAsset.name, updatedAsset.type, updatedAsset.subType, updatedAsset.currency, updatedAsset.amount, updatedAsset.includeInFire ? 1 : 0, updatedAsset.accountId, updatedAsset.quantity, updatedAsset.unitPrice, updatedAsset.interestRate, updatedAsset.startDate, updatedAsset.endDate, updatedAsset.valuationMethod, updatedAsset.updatedAt, updatedAsset.notes, id, userId]
     );
 
     return updatedAsset;
@@ -117,74 +204,32 @@ export const assetRepository = {
   getByType: async (userId: string, type: string): Promise<Asset[]> => {
     const adapter = getAdapter();
     const rows = await adapter.execute('SELECT * FROM assets WHERE type = ? AND user_id = ? ORDER BY updated_at DESC', [type, userId]);
-    return rows.map(row => ({
-      ...row,
-      includeInFire: getProp(row, 'includeInFire') === 1,
-      accountId: getProp(row, 'accountId'),
-      quantity: getProp(row, 'quantity'),
-      unitPrice: getProp(row, 'unitPrice'),
-      interestRate: getProp(row, 'interestRate'),
-      startDate: getProp(row, 'startDate'),
-      endDate: getProp(row, 'endDate'),
-      valuationMethod: getProp(row, 'valuationMethod'),
-      updatedAt: getProp(row, 'updatedAt'),
-      createdAt: getProp(row, 'createdAt'),
-      notes: getProp(row, 'notes')
-    })) as Asset[];
+    return rows.map(toAsset);
   },
 
   // 根据账户获取资产
   getByAccountId: async (userId: string, accountId: string): Promise<Asset[]> => {
     const adapter = getAdapter();
     const rows = await adapter.execute('SELECT * FROM assets WHERE account_id = ? AND user_id = ? ORDER BY updated_at DESC', [accountId, userId]);
-    return rows.map(row => ({
-      ...row,
-      includeInFire: getProp(row, 'includeInFire') === 1,
-      accountId: getProp(row, 'accountId'),
-      quantity: getProp(row, 'quantity'),
-      unitPrice: getProp(row, 'unitPrice'),
-      interestRate: getProp(row, 'interestRate'),
-      startDate: getProp(row, 'startDate'),
-      endDate: getProp(row, 'endDate'),
-      valuationMethod: getProp(row, 'valuationMethod'),
-      updatedAt: getProp(row, 'updatedAt'),
-      createdAt: getProp(row, 'createdAt'),
-      notes: getProp(row, 'notes')
-    })) as Asset[];
+    return rows.map(toAsset);
   }
 };
 
-// 负债相关操作
+// ==================== 负债相关操作 ====================
+
 export const liabilityRepository = {
   // 获取所有负债
   getAll: async (userId: string): Promise<Liability[]> => {
     const adapter = getAdapter();
     const rows = await adapter.execute('SELECT * FROM liabilities WHERE user_id = ? ORDER BY updated_at DESC', [userId]);
-    return rows.map(row => ({
-      ...row,
-      interestRate: getProp(row, 'interestRate'),
-      startDate: getProp(row, 'startDate'),
-      endDate: getProp(row, 'endDate'),
-      updatedAt: getProp(row, 'updatedAt'),
-      createdAt: getProp(row, 'createdAt'),
-      notes: getProp(row, 'notes')
-    })) as Liability[];
+    return rows.map(toLiability);
   },
 
   // 根据 ID 获取负债
   getById: async (userId: string, id: string): Promise<Liability | undefined> => {
     const adapter = getAdapter();
     const row = await adapter.get('SELECT * FROM liabilities WHERE id = ? AND user_id = ?', [id, userId]);
-    if (!row) return undefined;
-    return {
-      ...row,
-      interestRate: getProp(row, 'interestRate'),
-      startDate: getProp(row, 'startDate'),
-      endDate: getProp(row, 'endDate'),
-      updatedAt: getProp(row, 'updatedAt'),
-      createdAt: getProp(row, 'createdAt'),
-      notes: getProp(row, 'notes')
-    } as Liability;
+    return row ? toLiability(row) : undefined;
   },
 
   // 创建负债
@@ -237,28 +282,21 @@ export const liabilityRepository = {
   }
 };
 
-// 还款记录相关操作
+// ==================== 还款记录相关操作 ====================
+
 export const paymentRepository = {
   // 获取所有还款记录
   getAll: async (userId: string): Promise<Payment[]> => {
     const adapter = getAdapter();
     const rows = await adapter.execute('SELECT * FROM payments WHERE user_id = ? ORDER BY date DESC', [userId]);
-    return rows.map(row => ({
-      ...row,
-      liabilityId: getProp(row, 'liabilityId'),
-      createdAt: getProp(row, 'createdAt')
-    })) as Payment[];
+    return rows.map(toPayment);
   },
 
   // 根据负债 ID 获取还款记录
   getByLiabilityId: async (userId: string, liabilityId: string): Promise<Payment[]> => {
     const adapter = getAdapter();
     const rows = await adapter.execute('SELECT * FROM payments WHERE liability_id = ? AND user_id = ? ORDER BY date DESC', [liabilityId, userId]);
-    return rows.map(row => ({
-      ...row,
-      liabilityId: getProp(row, 'liabilityId'),
-      createdAt: getProp(row, 'createdAt')
-    })) as Payment[];
+    return rows.map(toPayment);
   },
 
   // 创建还款记录
@@ -289,31 +327,21 @@ export const paymentRepository = {
   }
 };
 
-// 交易相关操作
+// ==================== 交易相关操作 ====================
+
 export const transactionRepository = {
   // 获取所有交易
   getAll: async (userId: string): Promise<Transaction[]> => {
     const adapter = getAdapter();
     const rows = await adapter.execute('SELECT * FROM transactions WHERE user_id = ? ORDER BY date DESC', [userId]);
-    return rows.map(row => ({
-      ...row,
-      fromAssetId: getProp(row, 'fromAssetId'),
-      toAssetId: getProp(row, 'toAssetId'),
-      createdAt: getProp(row, 'createdAt')
-    })) as Transaction[];
+    return rows.map(toTransaction);
   },
 
   // 根据 ID 获取交易
   getById: async (userId: string, id: string): Promise<Transaction | undefined> => {
     const adapter = getAdapter();
     const row = await adapter.get('SELECT * FROM transactions WHERE id = ? AND user_id = ?', [id, userId]);
-    if (!row) return undefined;
-    return {
-      ...row,
-      fromAssetId: getProp(row, 'fromAssetId'),
-      toAssetId: getProp(row, 'toAssetId'),
-      createdAt: getProp(row, 'createdAt')
-    } as Transaction;
+    return row ? toTransaction(row) : undefined;
   },
 
   // 创建交易
@@ -344,27 +372,21 @@ export const transactionRepository = {
   }
 };
 
-// 账户相关操作
+// ==================== 账户相关操作 ====================
+
 export const accountRepository = {
   // 获取所有账户
   getAll: async (userId: string): Promise<Account[]> => {
     const adapter = getAdapter();
     const rows = await adapter.execute('SELECT * FROM accounts WHERE user_id = ? ORDER BY created_at DESC', [userId]);
-    return rows.map(row => ({
-      ...row,
-      createdAt: getProp(row, 'createdAt')
-    })) as Account[];
+    return rows.map(toAccount);
   },
 
   // 根据 ID 获取账户
   getById: async (userId: string, id: string): Promise<Account | undefined> => {
     const adapter = getAdapter();
     const row = await adapter.get('SELECT * FROM accounts WHERE id = ? AND user_id = ?', [id, userId]);
-    if (!row) return undefined;
-    return {
-      ...row,
-      createdAt: getProp(row, 'createdAt')
-    } as Account;
+    return row ? toAccount(row) : undefined;
   },
 
   // 创建账户
@@ -414,27 +436,21 @@ export const accountRepository = {
   }
 };
 
-// 市场数据相关操作
+// ==================== 市场数据相关操作 ====================
+
 export const marketDataRepository = {
   // 获取所有市场数据
   getAll: async (): Promise<MarketData[]> => {
     const adapter = getAdapter();
     const rows = await adapter.execute('SELECT * FROM market_data ORDER BY symbol', []);
-    return rows.map(row => ({
-      ...row,
-      updatedAt: getProp(row, 'updatedAt')
-    })) as MarketData[];
+    return rows.map(toMarketData);
   },
 
   // 根据符号获取市场数据
   getBySymbol: async (symbol: string): Promise<MarketData | undefined> => {
     const adapter = getAdapter();
     const row = await adapter.get('SELECT * FROM market_data WHERE symbol = ?', [symbol]);
-    if (!row) return undefined;
-    return {
-      ...row,
-      updatedAt: getProp(row, 'updatedAt')
-    } as MarketData;
+    return row ? toMarketData(row) : undefined;
   },
 
   // 创建或更新市场数据
@@ -475,34 +491,21 @@ export const marketDataRepository = {
   }
 };
 
-// 时间轴相关操作
+// ==================== 活动相关操作 ====================
+
 export const activityRepository = {
   // 获取所有活动
   getAll: async (userId: string, limit: number = 50, offset: number = 0): Promise<Activity[]> => {
     const adapter = getAdapter();
     const rows = await adapter.execute('SELECT * FROM activities WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?', [userId, limit, offset]);
-    return rows.map(row => ({
-      ...row,
-      objectType: getProp(row, 'objectType'),
-      objectId: getProp(row, 'objectId'),
-      objectName: getProp(row, 'objectName'),
-      oldAmount: getProp(row, 'oldAmount'),
-      createdAt: getProp(row, 'createdAt')
-    })) as Activity[];
+    return rows.map(toActivity);
   },
 
   // 根据对象类型获取活动
   getByObjectType: async (userId: string, objectType: string, limit: number = 50, offset: number = 0): Promise<Activity[]> => {
     const adapter = getAdapter();
     const rows = await adapter.execute('SELECT * FROM activities WHERE object_type = ? AND user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?', [objectType, userId, limit, offset]);
-    return rows.map(row => ({
-      ...row,
-      objectType: getProp(row, 'objectType'),
-      objectId: getProp(row, 'objectId'),
-      objectName: getProp(row, 'objectName'),
-      oldAmount: getProp(row, 'oldAmount'),
-      createdAt: getProp(row, 'createdAt')
-    })) as Activity[];
+    return rows.map(toActivity);
   },
 
   // 创建活动
@@ -526,66 +529,75 @@ export const activityRepository = {
   }
 };
 
-// FIRE 配置相关操作
-export const fireConfigRepository = {
-  // 获取 FIRE 配置
-  get: async (userId: string): Promise<FireConfig> => {
+// ==================== FIRE 成员相关操作 ====================
+
+export const fireMemberRepository = {
+  // 获取所有 FIRE 成员
+  getAll: async (userId: string): Promise<FireMember[]> => {
     const adapter = getAdapter();
-    const row = await adapter.get('SELECT * FROM fire_config WHERE id = ? ORDER BY updated_at DESC LIMIT 1', [userId]);
-    if (!row) {
-      return {
-        id: userId,
-        annualExpense: 120000,
-        swr: 0.04,
-        updatedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString()
-      };
-    }
-    return {
-      ...row,
-      annualExpense: getProp(row, 'annualExpense'),
-      updatedAt: getProp(row, 'updatedAt'),
-      createdAt: getProp(row, 'createdAt')
-    } as FireConfig;
+    const rows = await adapter.execute('SELECT * FROM fire_members WHERE user_id = ? ORDER BY created_at ASC', [userId]);
+    return rows.map(toFireMember);
   },
 
-  // 创建或更新 FIRE 配置
-  upsert: async (userId: string, config: Omit<FireConfig, 'id' | 'createdAt' | 'updatedAt'>): Promise<FireConfig> => {
-    const existing = await fireConfigRepository.get(userId);
-    const now = new Date().toISOString();
+  // 根据 ID 获取 FIRE 成员
+  getById: async (userId: string, id: string): Promise<FireMember | undefined> => {
     const adapter = getAdapter();
+    const row = await adapter.get('SELECT * FROM fire_members WHERE id = ? AND user_id = ?', [id, userId]);
+    return row ? toFireMember(row) : undefined;
+  },
 
-    if (existing) {
-      await adapter.run(
-        `UPDATE fire_config SET annual_expense = ?, swr = ?, updated_at = ? WHERE id = ?`,
-        [config.annualExpense, config.swr, now, userId]
-      );
+  // 创建 FIRE 成员
+  create: async (userId: string, member: Omit<FireMember, 'id' | 'userId' | 'createdAt' | 'updatedAt'>): Promise<FireMember> => {
+    const id = generateId().toString();
+    const now = new Date().toISOString();
+    const newMember = {
+      ...member,
+      id,
+      userId,
+      createdAt: now,
+      updatedAt: now
+    };
 
-      return {
-        ...existing,
-        annualExpense: config.annualExpense,
-        swr: config.swr,
-        updatedAt: now
-      };
-    } else {
-      const newConfig = {
-        ...config,
-        id: userId,
-        createdAt: now,
-        updatedAt: now
-      };
+    const adapter = getAdapter();
+    await adapter.run(
+      `INSERT INTO fire_members (id, user_id, name, gender, birth_date, retirement_age, monthly_expense, target_retirement_asset, updated_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [newMember.id, userId, newMember.name, newMember.gender, newMember.birthDate, newMember.retirementAge, newMember.monthlyExpense, newMember.targetRetirementAsset, newMember.updatedAt, newMember.createdAt]
+    );
 
-      await adapter.run(
-        `INSERT INTO fire_config (id, annual_expense, swr, updated_at, created_at) VALUES (?, ?, ?, ?, ?)`,
-        [newConfig.id, newConfig.annualExpense, newConfig.swr, newConfig.updatedAt, newConfig.createdAt]
-      );
+    return newMember as unknown as FireMember;
+  },
 
-      return newConfig;
-    }
+  // 更新 FIRE 成员
+  update: async (userId: string, id: string, member: Partial<FireMember>): Promise<FireMember | undefined> => {
+    const existing = await fireMemberRepository.getById(userId, id);
+    if (!existing) return undefined;
+
+    const now = new Date().toISOString();
+    const updatedMember = {
+      ...existing,
+      ...member,
+      updatedAt: now
+    };
+
+    const adapter = getAdapter();
+    await adapter.run(
+      `UPDATE fire_members SET name = ?, gender = ?, birth_date = ?, retirement_age = ?, monthly_expense = ?, target_retirement_asset = ?, updated_at = ? WHERE id = ? AND user_id = ?`,
+      [updatedMember.name, updatedMember.gender, updatedMember.birthDate, updatedMember.retirementAge, updatedMember.monthlyExpense, updatedMember.targetRetirementAsset, updatedMember.updatedAt, id, userId]
+    );
+
+    return updatedMember;
+  },
+
+  // 删除 FIRE 成员
+  delete: async (userId: string, id: string): Promise<boolean> => {
+    const adapter = getAdapter();
+    await adapter.run('DELETE FROM fire_members WHERE id = ? AND user_id = ?', [id, userId]);
+    return true;
   }
 };
 
-// 用户设置相关操作
+// ==================== 用户设置相关操作 ====================
+
 export const userSettingsRepository = {
   // 获取用户设置
   get: async (userId: string): Promise<UserSettings> => {
@@ -600,13 +612,7 @@ export const userSettingsRepository = {
         createdAt: new Date().toISOString()
       };
     }
-    return {
-      id: row.id,
-      baseCurrency: getProp(row, 'baseCurrency') || 'CNY',
-      privacyMode: getProp(row, 'privacyMode') === 1,
-      updatedAt: getProp(row, 'updatedAt'),
-      createdAt: getProp(row, 'createdAt')
-    } as UserSettings;
+    return toUserSettings(row);
   },
 
   // 更新用户设置
@@ -616,12 +622,10 @@ export const userSettingsRepository = {
     const now = new Date().toISOString();
 
     if (existingRow) {
+      const existing = toUserSettings(existingRow);
       const updatedSettings = {
-        ...existingRow,
+        ...existing,
         ...settings,
-        baseCurrency: getProp(existingRow, 'baseCurrency') || 'CNY',
-        privacyMode: getProp(existingRow, 'privacyMode') === 1,
-        createdAt: getProp(existingRow, 'createdAt'),
         updatedAt: now
       };
 

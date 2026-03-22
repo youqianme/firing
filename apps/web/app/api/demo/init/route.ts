@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   mockAssets,
   mockLiabilities,
-  mockFireConfig,
+  mockFireMembers,
   mockUserSettings,
   mockAccounts,
   mockTransactions,
@@ -158,15 +158,18 @@ export async function POST(request: Request) {
       }
     }
 
-    // Initialize FireConfig
-    try {
-      await adapter.run(
-        `INSERT INTO fire_config (id, annual_expense, swr, updated_at, created_at) VALUES (?, ?, ?, ?, ?)`,
-        [userId, mockFireConfig.annualExpense, mockFireConfig.swr, now, now]
-      );
-    } catch (error: any) {
-      if (error.code !== '23505') {
-        throw error;
+    // Initialize FireMembers
+    for (const member of mockFireMembers) {
+      try {
+        const newId = `${userId}-member-${uuidv4().slice(0, 8)}`;
+        await adapter.run(
+          `INSERT INTO fire_members (id, user_id, name, gender, birth_date, retirement_age, monthly_expense, target_retirement_asset, updated_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [newId, userId, member.name, member.gender, member.birthDate, member.retirementAge, member.monthlyExpense, member.targetRetirementAsset, member.updatedAt, member.createdAt]
+        );
+      } catch (error: any) {
+        if (error.code !== '23505') {
+          throw error;
+        }
       }
     }
 

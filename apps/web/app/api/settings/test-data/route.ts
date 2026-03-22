@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server';
-import { 
-  assetRepository, 
-  liabilityRepository, 
-  fireConfigRepository, 
-  userSettingsRepository 
+import {
+  assetRepository,
+  liabilityRepository,
+  fireMemberRepository,
+  userSettingsRepository
 } from '../../../../lib/dataAccess';
-import { 
-  mockAssets, 
-  mockLiabilities, 
-  mockFireConfig, 
-  mockUserSettings 
+import {
+  mockAssets,
+  mockLiabilities,
+  mockFireMembers,
+  mockUserSettings
 } from '@firing/utils';
 
 // 生成演示数据（与游客账户系统保持一致）
@@ -38,9 +38,11 @@ export async function POST(request: Request) {
       await liabilityRepository.create(userId, liabilityData);
     }
 
-    // 初始化 FIRE 配置
-    const { id: fcId, createdAt: fcCreatedAt, updatedAt: fcUpdatedAt, ...fireConfigData } = mockFireConfig;
-    await fireConfigRepository.upsert(userId, fireConfigData);
+    // 初始化 FIRE 成员
+    for (const member of mockFireMembers) {
+      const { id, createdAt, updatedAt, userId: _, ...memberData } = member;
+      await fireMemberRepository.create(userId, memberData);
+    }
 
     // 初始化用户设置
     const { id: usId, createdAt: usCreatedAt, updatedAt: usUpdatedAt, ...userSettingsData } = mockUserSettings;
