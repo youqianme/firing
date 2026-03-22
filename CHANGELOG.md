@@ -1,5 +1,66 @@
 # 有钱么财务应用变更日志
 
+## [1.8.0] - 2026-03-22
+
+### 🏛️ 公积金管理功能
+
+- **公积金资产类型**
+  - 新增 `housing_fund` 资产类型，支持将公积金作为独立资产类别管理
+  - 公积金资产默认不计入 FIRE 计算（退休前难以取出）
+  - 资产列表中公积金显示"公积金"类型标签
+
+- **公积金变动记录**
+  - 支持记录公积金到账（个人缴纳 + 单位缴纳）
+  - 支持记录公积金提取（购房、租房、装修等）
+  - 自动计算并更新公积金余额
+  - 变动记录按日期倒序展示，支持删除
+
+- **公积金详情页面**
+  - 路径：`/housing-fund/[id]`
+  - 显示账户基本信息（名称、当前余额）
+  - 统计信息：本月到账、累计缴纳、累计提取、缴纳月数、净缴纳金额
+  - 变动记录列表：展示所有到账/提取记录
+  - 添加记录功能：支持添加到账和提取记录
+
+- **公积金账户类型**
+  - 账户管理支持创建公积金类型账户
+  - 账户类型选择器添加"公积金"选项
+
+- **数据库变更**
+  - 新增 `housing_fund_records` 表存储公积金变动记录
+  - 字段：id, user_id, asset_id, type(deposit/withdraw/interest), amount, personal_amount, company_amount, date, reason, notes, created_at
+
+### 📁 新增文件
+- `apps/web/app/housing-fund/[id]/page.tsx` - 公积金详情页面
+- `apps/web/app/housing-fund/components/HousingFundRecordForm.tsx` - 变动记录表单
+- `apps/web/app/housing-fund/components/HousingFundRecordList.tsx` - 变动记录列表
+- `apps/web/app/api/housing-fund/records/route.ts` - 公积金记录 API
+- `packages/data-access/src/repositories/housingFundRepository.ts` - 数据访问层
+
+### 📁 修改文件
+- `apps/web/app/assets/types.ts` - 添加 `housing_fund` 到 AssetType
+- `apps/web/app/assets/page.tsx` - 添加公积金类型选择和详情入口
+- `apps/web/app/accounts/types.ts` - 添加 `housing_fund` 到 AccountType
+- `apps/web/app/accounts/page.tsx` - 添加公积金账户选项
+- `packages/data-access/sql/schema.sql` - 添加 `housing_fund_records` 表
+
+### 📊 首页图表交互优化
+
+- **可交互图例**
+  - 图例支持点击切换显示/隐藏对应线条
+  - 默认全部线条显示
+  - 隐藏的线条降低透明度，提供视觉反馈
+  - 支持同时显示或隐藏多条线
+
+- **可切换的线条**
+  - 资产（绿色面积图）
+  - 负债（红色面积图）
+  - 净资产（蓝色折线）
+  - FIRE进度（橙色虚线，仅配置了FIRE目标时显示）
+
+### 📁 修改文件
+- `apps/web/app/page.tsx` - 添加可交互图例功能
+
 ## [1.7.0] - 2026-03-22
 
 ### 🔥 FIRE 目标规划重构
@@ -64,6 +125,13 @@
   - X轴显示为"YYYY年MM月"格式
   - Tooltip显示年月信息
   - 支持跨年数据显示
+
+- **FIRE进度展示**
+  - 图表中添加FIRE进度曲线（橙色虚线）
+  - 使用双Y轴设计：左侧显示金额，右侧显示百分比
+  - FIRE进度基于净资产计算（计入FIRE的资产 - 负债）
+  - 与顶部FIRE卡片进度保持一致
+  - 仅在配置了FIRE目标时显示
 
 ### 📁 修改文件
 - `apps/web/app/page.tsx` - 首页图表组件重构
@@ -451,6 +519,8 @@ sqlite3 database.db < packages/data-access/sql/schema.sql
   - 创建共享工具函数包
   - 创建共享数据访问层包
 
+[1.8.0]: #
+[1.7.0]: #
 [1.6.0]: #
 [1.5.0]: #
 [1.4.0]: #

@@ -7,6 +7,7 @@ import { AccountType, Currency, type Account } from './types';
 export default function AccountsPage() {
   const { userId } = useUser();
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -27,6 +28,7 @@ export default function AccountsPage() {
   // 加载账户数据
   async function loadAccounts() {
     try {
+      setIsLoading(true);
       const response = await fetch('/api/accounts', {
         headers: {
           'x-user-id': userId
@@ -36,6 +38,8 @@ export default function AccountsPage() {
       setAccounts(Array.isArray(loadedAccounts) ? loadedAccounts : []);
     } catch (error) {
       console.error('Failed to load accounts:', error);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -168,6 +172,17 @@ export default function AccountsPage() {
     }
   }
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">加载中...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <main className="container mx-auto px-4 py-8">
@@ -225,6 +240,7 @@ export default function AccountsPage() {
                   <option value="broker">券商</option>
                   <option value="bank">银行卡</option>
                   <option value="cash">现金</option>
+                  <option value="housing_fund">公积金</option>
                   <option value="other">其他</option>
                 </select>
               </div>
@@ -303,7 +319,7 @@ export default function AccountsPage() {
                       <h3 className="font-semibold text-slate-900">{account.name}</h3>
                       <div className="flex items-center space-x-4 mt-2">
                         <span className="text-sm text-slate-500">
-                          类型: {account.type === 'broker' ? '券商' : account.type === 'bank' ? '银行卡' : account.type === 'cash' ? '现金' : '其他'}
+                          类型: {account.type === 'broker' ? '券商' : account.type === 'bank' ? '银行卡' : account.type === 'cash' ? '现金' : account.type === 'housing_fund' ? '公积金' : '其他'}
                         </span>
                         {account.currency && (
                           <span className="text-sm text-slate-500">

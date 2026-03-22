@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { useUser } from '../context/UserContext';
 import { convertCurrency, formatCurrency } from '@firing/utils';
 import { formatDate } from '@firing/utils';
 import { Currency, AssetType, InvestmentSubType, type Asset } from './types';
 
 export default function AssetsPage() {
+  const router = useRouter();
   const { userId } = useUser();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
@@ -92,6 +94,24 @@ export default function AssetsPage() {
         endDate: endDate.toISOString().split('T')[0]
       }));
     }
+
+    // 清除已删除字段的值
+    if (name === 'type') {
+      setFormData(prev => {
+        const newData = { ...prev };
+        // 清除不再相关的字段
+        if (value !== 'bank') {
+          delete (newData as any).interestRate;
+          delete (newData as any).startDate;
+          delete (newData as any).endDate;
+        }
+        if (value !== 'investment') {
+          delete (newData as any).subType;
+        }
+
+        return newData;
+      });
+    }
   }
 
   // 处理资产类型变化
@@ -100,7 +120,7 @@ export default function AssetsPage() {
       ...prev,
       type,
       subType: type === 'investment' ? (subType || 'stock') : undefined,
-      includeInFire: type === 'real_estate' || type === 'other' ? false : true
+      includeInFire: type === 'real_estate' || type === 'other' || type === 'housing_fund' ? false : true
     }));
   }
 
@@ -287,6 +307,8 @@ export default function AssetsPage() {
         return safeAssets.filter(asset => asset.type === 'investment');
       case 'real_estate':
         return safeAssets.filter(asset => asset.type === 'real_estate');
+      case 'housing_fund':
+        return safeAssets.filter(asset => asset.type === 'housing_fund');
       case 'other':
         return safeAssets.filter(asset => asset.type === 'other');
       default:
@@ -357,6 +379,12 @@ export default function AssetsPage() {
                 房产
               </button>
               <button 
+                onClick={() => setActiveFilter('housing_fund')}
+                className={`px-4 py-2 rounded-lg ${activeFilter === 'housing_fund' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
+              >
+                公积金
+              </button>
+              <button 
                 onClick={() => setActiveFilter('other')}
                 className={`px-4 py-2 rounded-lg ${activeFilter === 'other' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50'}`}
               >
@@ -382,6 +410,7 @@ export default function AssetsPage() {
                 { type: 'investment' as AssetType, subType: 'fund' as InvestmentSubType, icon: '💰', label: '基金' },
                 { type: 'investment' as AssetType, subType: 'gold' as InvestmentSubType, icon: '🥇', label: '黄金' },
                 { type: 'real_estate' as AssetType, icon: '🏠', label: '房产' },
+                { type: 'housing_fund' as AssetType, icon: '🏛️', label: '公积金' },
                 { type: 'other' as AssetType, icon: '🚗', label: '车辆' },
                 { type: 'other' as AssetType, icon: '💎', label: '奢侈品' }
               ].map(({ type, subType, icon, label }) => (
@@ -615,6 +644,7 @@ export default function AssetsPage() {
                             asset.subType === 'fund' ? '基金' :
                             asset.subType === 'gold' ? '黄金' : '投资') :
                          asset.type === 'real_estate' ? '房产' :
+                         asset.type === 'housing_fund' ? '公积金' :
                          asset.type === 'other' ? '其他' : asset.type}
                       </span>
                     </td>
@@ -634,6 +664,14 @@ export default function AssetsPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      {asset.type === 'housing_fund' && (
+                        <button
+                          onClick={() => router.push(`/housing-fund/${asset.id}`)}
+                          className="text-green-600 hover:text-green-900 mr-4"
+                        >
+                          详情
+                        </button>
+                      )}
                       <button
                         onClick={() => handleEdit(asset)}
                         className="text-blue-600 hover:text-blue-900 mr-4"
@@ -675,6 +713,7 @@ export default function AssetsPage() {
                         asset.subType === 'fund' ? '基金' :
                         asset.subType === 'gold' ? '黄金' : '投资') :
                      asset.type === 'real_estate' ? '房产' :
+                     asset.type === 'housing_fund' ? '公积金' :
                      asset.type === 'other' ? '其他' : asset.type}
                   </span>
                 </div>
@@ -698,6 +737,14 @@ export default function AssetsPage() {
 
               {/* 操作按钮 */}
               <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100">
+                {asset.type === 'housing_fund' && (
+                  <button
+                    onClick={() => router.push(`/housing-fund/${asset.id}`)}
+                    className="flex-1 py-2 text-green-600 font-medium bg-green-50 rounded-lg text-center active:bg-green-100"
+                  >
+                    详情
+                  </button>
+                )}
                 <button
                   onClick={() => handleEdit(asset)}
                   className="flex-1 py-2 text-blue-600 font-medium bg-blue-50 rounded-lg text-center active:bg-blue-100"

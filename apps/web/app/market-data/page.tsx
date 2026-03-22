@@ -11,6 +11,7 @@ export default function MarketDataPage() {
     hkdToCny: 0.92,
     goldPriceCny: 480.00
   });
+  const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -24,6 +25,7 @@ export default function MarketDataPage() {
   // 加载市场数据
   async function loadMarketData() {
     try {
+      setIsLoading(true);
       // 通过 API 获取市场数据
       const response = await fetch('/api/market-data', {
         headers: { 'x-user-id': userId }
@@ -38,6 +40,8 @@ export default function MarketDataPage() {
         hkdToCny: 0.92,
         goldPriceCny: 480.00
       });
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -72,6 +76,17 @@ export default function MarketDataPage() {
       ...prev,
       [name]: parseFloat(value) || 0
     }));
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">加载中...</p>
+        </div>
+      </div>
+    );
   }
 
   return (

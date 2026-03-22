@@ -20,6 +20,12 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [missingRates, setMissingRates] = useState<string[]>([]);
   const [timeRange, setTimeRange] = useState<6 | 12 | 24 | 36 | 60 | 120>(12); // 月份范围
+  const [visibleLines, setVisibleLines] = useState({
+    assets: true,
+    liabilities: true,
+    netWorth: true,
+    fireProgress: true
+  });
 
   // 获取活动类型文本
   function getActivityActionText(action: string): string {
@@ -183,6 +189,9 @@ export default function Home() {
     const today = new Date();
     const data = [];
 
+    // 获取 FIRE 目标金额（如果有）
+    const fireTarget = fireMetrics?.target || 0;
+
     // 生成月份数据（从今天往前 timeRange 个月）
     for (let i = timeRange; i >= 0; i--) {
       const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
@@ -196,12 +205,17 @@ export default function Home() {
 
       // 计算该月月底时已创建的资产总额
       let assetsValue = 0;
+      let fireAssetsValue = 0;
       for (const asset of assets) {
         const assetStartDate = asset.startDate || asset.createdAt;
         if (assetStartDate) {
           const assetDate = new Date(assetStartDate);
           if (assetDate <= monthEnd) {
-            assetsValue += convertCurrency(asset.amount, asset.currency, baseCurrency);
+            const amount = convertCurrency(asset.amount, asset.currency, baseCurrency);
+            assetsValue += amount;
+            if (asset.includeInFire) {
+              fireAssetsValue += amount;
+            }
           }
         }
       }
@@ -220,17 +234,23 @@ export default function Home() {
 
       const netWorthValue = assetsValue - liabilitiesValue;
 
+      // 计算该月的 FIRE 进度（基于净资产 = FIRE资产 - 负债，与API保持一致）
+      const fireNetWorth = fireAssetsValue - liabilitiesValue;
+      const fireProgress = fireTarget > 0 ? Math.min(100, (fireNetWorth / fireTarget) * 100) : 0;
+
       data.push({
         date: dateStr,
         assets: Math.max(0, Math.round(assetsValue)),
         liabilities: Math.max(0, Math.round(liabilitiesValue)),
         liabilitiesNegative: -Math.max(0, Math.round(liabilitiesValue)),
-        netWorth: Math.round(netWorthValue)
+        netWorth: Math.round(netWorthValue),
+        fireProgress: Math.round(fireProgress * 10) / 10, // 保留一位小数
+        fireTarget: Math.round(fireTarget)
       });
     }
 
     return data;
-  }, [assets, liabilities, baseCurrency, timeRange]);
+  }, [assets, liabilities, baseCurrency, timeRange, fireMetrics]);
 
   if (isLoading) {
     return (
@@ -379,20 +399,38 @@ export default function Home() {
                   </button>
                 ))}
               </div>
-              {/* 图例 */}
-              <div className="flex items-center space-x-4 text-sm">
-                <div className="flex items-center">
+              {/* 可点击图例 */}
+              <div className="flex items-center space-x-2 text-sm">
+                <button
+                  onClick={() => setVisibleLines(prev => ({ ...prev, assets: !prev.assets }))}
+                  className={`flex items-center px-2 py-1 rounded-md transition-all ${visibleLines.assets ? 'bg-slate-100' : 'opacity-50'}`}
+                >
                   <span className="w-3 h-3 rounded-full bg-emerald-500 mr-2"></span>
                   <span className="text-slate-600">资产</span>
-                </div>
-                <div className="flex items-center">
+                </button>
+                <button
+                  onClick={() => setVisibleLines(prev => ({ ...prev, liabilities: !prev.liabilities }))}
+                  className={`flex items-center px-2 py-1 rounded-md transition-all ${visibleLines.liabilities ? 'bg-slate-100' : 'opacity-50'}`}
+                >
                   <span className="w-3 h-3 rounded-full bg-rose-500 mr-2"></span>
                   <span className="text-slate-600">负债</span>
-                </div>
-                <div className="flex items-center">
+                </button>
+                <button
+                  onClick={() => setVisibleLines(prev => ({ ...prev, netWorth: !prev.netWorth }))}
+                  className={`flex items-center px-2 py-1 rounded-md transition-all ${visibleLines.netWorth ? 'bg-slate-100' : 'opacity-50'}`}
+                >
                   <span className="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
                   <span className="text-slate-600">净资产</span>
-                </div>
+                </button>
+                {fireMetrics && (
+                  <button
+                    onClick={() => setVisibleLines(prev => ({ ...prev, fireProgress: !prev.fireProgress }))}
+                    className={`flex items-center px-2 py-1 rounded-md transition-all ${visibleLines.fireProgress ? 'bg-slate-100' : 'opacity-50'}`}
+                  >
+                    <span className="w-3 h-3 rounded-full bg-orange-500 mr-2"></span>
+                    <span className="text-slate-600">FIRE进度</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -420,8 +458,9 @@ export default function Home() {
                     return `${year}年${month}月`;
                   }}
                 />
-                <YAxis 
-                  tick={{ fontSize: 12 }} 
+                <YAxis
+                  yAxisId="left"
+                  tick={{ fontSize: 12 }}
                   stroke="#64748B"
                   tickFormatter={(value) => {
                     if (value >= 10000) {
@@ -430,6 +469,16 @@ export default function Home() {
                     return value.toString();
                   }}
                 />
+                {fireMetrics && (
+                  <YAxis
+                    yAxisId="right"
+                    orientation="right"
+                    tick={{ fontSize: 12 }}
+                    stroke="#F97316"
+                    domain={[0, 100]}
+                    tickFormatter={(value) => `${value}%`}
+                  />
+                )}
                 <Tooltip 
                   content={({ active, payload, label }) => {
                     if (active && payload && payload.length) {
@@ -441,13 +490,15 @@ export default function Home() {
                               assets: '资产',
                               liabilities: '负债',
                               liabilitiesNegative: '负债',
-                              netWorth: '净资产'
+                              netWorth: '净资产',
+                              fireProgress: 'FIRE进度'
                             };
                             const colorMap: Record<string, string> = {
                               assets: '#10B981',
                               liabilities: '#F43F5E',
                               liabilitiesNegative: '#F43F5E',
-                              netWorth: '#3B82F6'
+                              netWorth: '#3B82F6',
+                              fireProgress: '#F97316'
                             };
                             // 负债显示为正值
                             const displayValue = entry.dataKey === 'liabilitiesNegative'
@@ -463,7 +514,9 @@ export default function Home() {
                                   <span className="text-slate-600">{nameMap[entry.dataKey as string]}</span>
                                 </span>
                                 <span className="font-medium" style={{ color: colorMap[entry.dataKey as string] }}>
-                                  {formatCurrency(displayValue, baseCurrency)}
+                                  {entry.dataKey === 'fireProgress'
+                                    ? `${displayValue}%`
+                                    : formatCurrency(displayValue, baseCurrency)}
                                 </span>
                               </p>
                             );
@@ -475,34 +528,56 @@ export default function Home() {
                   }}
                 />
                 {/* 资产面积图 - 正值堆叠 */}
-                <Area
-                  type="monotone"
-                  dataKey="assets"
-                  stroke="#10B981"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorAssets)"
-                  stackId="stack"
-                />
+                {visibleLines.assets && (
+                  <Area
+                    yAxisId="left"
+                    type="monotone"
+                    dataKey="assets"
+                    stroke="#10B981"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorAssets)"
+                    stackId="stack"
+                  />
+                )}
                 {/* 负债面积图 - 负值堆叠 */}
-                <Area
-                  type="monotone"
-                  dataKey="liabilitiesNegative"
-                  stroke="#F43F5E"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorLiabilities)"
-                  stackId="stack"
-                />
+                {visibleLines.liabilities && (
+                  <Area
+                    yAxisId="left"
+                    type="monotone"
+                    dataKey="liabilitiesNegative"
+                    stroke="#F43F5E"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorLiabilities)"
+                    stackId="stack"
+                  />
+                )}
                 {/* 净资产基准线 */}
-                <Line
-                  type="monotone"
-                  dataKey="netWorth"
-                  stroke="#3B82F6"
-                  strokeWidth={3}
-                  dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6, stroke: '#3B82F6', strokeWidth: 2 }}
-                />
+                {visibleLines.netWorth && (
+                  <Line
+                    yAxisId="left"
+                    type="monotone"
+                    dataKey="netWorth"
+                    stroke="#3B82F6"
+                    strokeWidth={3}
+                    dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, stroke: '#3B82F6', strokeWidth: 2 }}
+                  />
+                )}
+                {/* FIRE进度线 */}
+                {fireMetrics && visibleLines.fireProgress && (
+                  <Line
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="fireProgress"
+                    stroke="#F97316"
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    dot={{ fill: '#F97316', strokeWidth: 2, r: 3 }}
+                    activeDot={{ r: 5, stroke: '#F97316', strokeWidth: 2 }}
+                  />
+                )}
               </ComposedChart>
             </ResponsiveContainer>
           </div>
