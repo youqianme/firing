@@ -26,6 +26,7 @@ export default function FirePage() {
     monthlyExpense: 0,
     targetRetirementAsset: 0
   });
+  const [showHelp, setShowHelp] = useState(false);
 
   // 加载数据
   useEffect(() => {
@@ -215,7 +216,20 @@ export default function FirePage() {
       <main className="container mx-auto px-4 py-8">
         {/* 顶部栏 */}
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-slate-900">FIRE 目标</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-slate-900">FIRE 目标</h1>
+            <button
+              onClick={() => setShowHelp(!showHelp)}
+              className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-200 transition-colors"
+              title="计算说明"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+            </button>
+          </div>
           <button
             onClick={openAddForm}
             className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
@@ -223,6 +237,55 @@ export default function FirePage() {
             添加成员
           </button>
         </div>
+
+        {/* 计算说明弹窗 */}
+        {showHelp && (
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 mb-8 p-6">
+            <div className="flex justify-between items-start mb-4">
+              <h2 className="text-lg font-semibold text-blue-900">🔥 FIRE 计算说明</h2>
+              <button
+                onClick={() => setShowHelp(false)}
+                className="text-blue-600 hover:text-blue-800"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-600 font-medium">1.</span>
+                  <span className="text-blue-800">退休年龄根据性别自动估算（男60/女55），可手动修改</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-600 font-medium">2.</span>
+                  <span className="text-blue-800">个人所需 = 每月支出 × 距离退休月数 + 退休时目标资产</span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-600 font-medium">3.</span>
+                  <span className="text-blue-800">家庭总需求 = 所有成员个人所需之和</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-600 font-medium">4.</span>
+                  <span className="text-blue-800">FIRE 进度 = 净资产 / 家庭总需求</span>
+                </div>
+              </div>
+            </div>
+            <p className="text-blue-600 text-xs mt-4">
+              💡 提示：随着时间推移，距离退休月数会自动减少，所需总金额也会相应降低，FIRE 进度会自动提升。
+            </p>
+            <div className="mt-4 pt-4 border-t border-blue-200">
+              <p className="text-blue-800 text-sm">
+                <span className="font-medium">本金耗尽策略：</span>
+                退休前用资产给自己"发工资"，退休后依靠退休金生活。最激进的情况下，可以将"退休时目标资产"设为 0，表示退休时资产刚好耗尽。
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* 成员表单 */}
         {isEditing && (
@@ -470,6 +533,10 @@ export default function FirePage() {
                         <span className="text-slate-900">{formatCurrency(member.monthlyExpense, 'CNY')}</span>
                       </div>
                       <div className="flex justify-between">
+                        <span className="text-slate-500">退休时目标资产</span>
+                        <span className="text-slate-900">{formatCurrency(member.targetRetirementAsset, 'CNY')}</span>
+                      </div>
+                      <div className="flex justify-between">
                         <span className="text-slate-500">个人所需</span>
                         <span className="text-slate-900 font-medium">{formatCurrency(memberCalc.personalTotalNeeded, 'CNY')}</span>
                       </div>
@@ -536,25 +603,6 @@ export default function FirePage() {
           </div>
         </div>
 
-        {/* 提示信息 */}
-        <div className="mt-8 bg-yellow-50 rounded-xl p-6 border border-yellow-100">
-          <h3 className="text-lg font-medium text-yellow-800 mb-2">关于 FIRE 计算</h3>
-          <p className="text-yellow-700 mb-4">
-            本计算采用<strong>本金耗尽策略</strong>：退休前用资产给自己"发工资"，退休后依靠退休金生活。
-          </p>
-          <div className="space-y-2 text-yellow-700">
-            <p>计算公式:</p>
-            <ul className="list-disc list-inside ml-4 space-y-1">
-              <li>退休年龄根据性别自动估算（男60/女55），可手动修改</li>
-              <li>个人所需 = 每月支出 × 距离退休月数 + 退休时目标资产</li>
-              <li>家庭总需求 = 所有成员个人所需之和</li>
-              <li>FIRE 进度 = 当前资产 / 家庭总需求</li>
-            </ul>
-          </div>
-          <p className="text-yellow-700 mt-4">
-            <strong>提示：</strong>随着时间推移，距离退休月数会自动减少，所需总金额也会相应降低，FIRE 进度会自动提升。
-          </p>
-        </div>
       </main>
     </div>
   );

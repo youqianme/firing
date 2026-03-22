@@ -76,7 +76,7 @@ CREATE TABLE assets (
     name TEXT NOT NULL,
     type TEXT NOT NULL CHECK (type IN (
         'cash', 'savings', 'checking', 'stocks', 'bonds', 'funds', 'reits',
-        'crypto', 'real_estate', 'vehicle', 'precious_metals', 'other'
+        'crypto', 'real_estate', 'vehicle', 'precious_metals', 'housing_fund', 'other'
     )),
     subtype TEXT,
     current_value DECIMAL(15,2) NOT NULL DEFAULT 0,
@@ -112,6 +112,45 @@ CREATE TABLE asset_values (
 CREATE INDEX idx_asset_values_asset_id ON asset_values(asset_id);
 CREATE INDEX idx_asset_values_date ON asset_values(date);
 ```
+
+#### 公积金变动记录表 (housing_fund_records)
+```sql
+CREATE TABLE housing_fund_records (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL DEFAULT 'default',
+    asset_id INTEGER NOT NULL,
+    type TEXT NOT NULL CHECK (type IN ('deposit', 'withdraw', 'interest')),
+    amount DECIMAL(15,2) NOT NULL,
+    personal_amount DECIMAL(15,2),
+    company_amount DECIMAL(15,2),
+    date DATE NOT NULL,
+    reason TEXT,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (asset_id) REFERENCES assets(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_housing_fund_records_asset_id ON housing_fund_records(asset_id);
+CREATE INDEX idx_housing_fund_records_date ON housing_fund_records(date);
+CREATE INDEX idx_housing_fund_records_user_id ON housing_fund_records(user_id);
+```
+
+**字段说明**:
+- `id`: 记录唯一标识
+- `user_id`: 所属用户ID
+- `asset_id`: 关联的公积金资产ID
+- `type`: 变动类型（deposit-到账, withdraw-提取, interest-利息）
+- `amount`: 变动金额（到账/提取的总金额）
+- `personal_amount`: 个人缴纳金额（仅deposit类型）
+- `company_amount`: 单位缴纳金额（仅deposit类型）
+- `date`: 变动日期
+- `reason`: 提取原因（仅withdraw类型，如购房、租房、装修等）
+- `notes`: 备注
+
+**业务逻辑**:
+- 到账记录：amount = personal_amount + company_amount
+- 提取记录：amount为提取金额，personal_amount和company_amount为0
+- 利息记录：amount为利息金额，其他金额为0
 
 ### 3. 负债管理
 
@@ -394,6 +433,25 @@ CREATE TABLE IF NOT EXISTS liabilities (
   createdAt TEXT NOT NULL,
   notes TEXT
 );
+
+-- 公积金变动记录表
+CREATE TABLE IF NOT EXISTS housing_fund_records (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL DEFAULT 'default',
+  asset_id TEXT NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('deposit', 'withdraw', 'interest')),
+  amount DOUBLE PRECISION NOT NULL,
+  personal_amount DOUBLE PRECISION,
+  company_amount DOUBLE PRECISION,
+  date TEXT NOT NULL,
+  reason TEXT,
+  notes TEXT,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (asset_id) REFERENCES assets (id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_housing_fund_records_asset_id ON housing_fund_records(asset_id);
+CREATE INDEX idx_housing_fund_records_date ON housing_fund_records(date);
 
 -- 其他表...
 

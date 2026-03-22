@@ -134,6 +134,22 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TEXT NOT NULL
 );
 
+-- 公积金记录表
+CREATE TABLE IF NOT EXISTS housing_fund_records (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL DEFAULT 'default',
+  asset_id TEXT NOT NULL,
+  type TEXT NOT NULL, -- deposit(到账), withdraw(提取), interest(利息)
+  amount DOUBLE PRECISION NOT NULL,
+  personal_amount DOUBLE PRECISION,
+  company_amount DOUBLE PRECISION,
+  date TEXT NOT NULL,
+  reason TEXT,
+  notes TEXT,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (asset_id) REFERENCES assets (id) ON DELETE CASCADE
+);
+
 -- 初始数据
 INSERT INTO user_settings (id, base_currency, privacy_mode, updated_at, created_at)
 VALUES ('default', 'CNY', 0, datetime('now'), datetime('now'))

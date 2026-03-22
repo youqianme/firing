@@ -1,4 +1,4 @@
-export type AccountType = 'broker' | 'bank' | 'cash' | 'other';
+export type AccountType = 'broker' | 'bank' | 'cash' | 'housing_fund' | 'other';
 export type Currency = 'CNY' | 'USD' | 'EUR' | 'JPY' | 'KRW';
 
 export interface Account {
