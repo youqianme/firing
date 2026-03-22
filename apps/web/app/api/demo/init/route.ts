@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   mockAssets,
   mockLiabilities,
-  mockFireConfig,
+  mockFireMembers,
   mockUserSettings,
   mockAccounts,
   mockTransactions,
@@ -158,18 +158,13 @@ export async function POST(request: Request) {
       }
     }
 
-    // Initialize FireMembers (multiple members for demo)
-    const demoMembers = [
-      { name: '小明', gender: 'male', birthDate: '1990-01-01', monthlyExpense: 10000, targetRetirementAsset: 0 },
-      { name: '小红', gender: 'female', birthDate: '1992-06-15', monthlyExpense: 8000, targetRetirementAsset: 0 }
-    ];
-
-    for (const member of demoMembers) {
+    // Initialize FireMembers
+    for (const member of mockFireMembers) {
       try {
-        const memberId = `fire_member_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const newId = `${userId}-member-${uuidv4().slice(0, 8)}`;
         await adapter.run(
-          `INSERT INTO fire_members (id, user_id, name, gender, birth_date, monthly_expense, target_retirement_asset, updated_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [memberId, userId, member.name, member.gender, member.birthDate, member.monthlyExpense, member.targetRetirementAsset, now, now]
+          `INSERT INTO fire_members (id, user_id, name, gender, birth_date, retirement_age, monthly_expense, target_retirement_asset, updated_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [newId, userId, member.name, member.gender, member.birthDate, member.retirementAge, member.monthlyExpense, member.targetRetirementAsset, member.updatedAt, member.createdAt]
         );
       } catch (error: any) {
         if (error.code !== '23505') {

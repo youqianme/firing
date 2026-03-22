@@ -1,5 +1,5 @@
 import { dbManager } from '../../../lib/database';
-import { userSettingsRepository, assetRepository, liabilityRepository, transactionRepository, activityRepository, fireConfigRepository } from '../../../lib/dataAccess';
+import { userSettingsRepository, assetRepository, liabilityRepository, transactionRepository, activityRepository, fireMemberRepository } from '../../../lib/dataAccess';
 
 export async function GET(request: Request) {
   const userId = request.headers.get('x-user-id') || 'demo';
@@ -58,20 +58,20 @@ export async function DELETE(request: Request) {
     // 按照依赖关系删除数据，仅删除当前用户的数据
     // 和 /api/demo/reset 保持一致的删除顺序
     const tables = [
-      'payments', 
-      'transactions', 
-      'activities', 
-      'marketData', 
-      'assets', 
-      'liabilities', 
-      'accounts', 
-      'fireConfig', 
-      'userSettings'
+      'payments',
+      'transactions',
+      'activities',
+      'market_data',
+      'assets',
+      'liabilities',
+      'accounts',
+      'fire_members',
+      'user_settings'
     ];
 
     for (const table of tables) {
       try {
-        await adapter.run(`DELETE FROM ${table} WHERE userId = ?`, [userId]);
+        await adapter.run(`DELETE FROM ${table} WHERE user_id = ?`, [userId]);
       } catch (e) {
         console.warn(`Failed to delete from ${table}:`, e);
         // Continue with other tables

@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { dbManager } from '../../../../lib/database';
-import { 
-  assetRepository, 
-  liabilityRepository, 
-  fireConfigRepository, 
+import {
+  assetRepository,
+  liabilityRepository,
+  fireMemberRepository,
   userSettingsRepository,
   accountRepository,
   transactionRepository,
@@ -11,10 +11,10 @@ import {
   marketDataRepository,
   activityRepository
 } from '../../../../lib/dataAccess';
-import { 
-  mockAssets, 
-  mockLiabilities, 
-  mockFireConfig, 
+import {
+  mockAssets,
+  mockLiabilities,
+  mockFireMembers,
   mockUserSettings,
   mockAccounts,
   mockTransactions,
@@ -35,25 +35,25 @@ export async function POST(request: Request) {
     // transactions -> assets
     // assets -> accounts (if implemented)
     const tables = [
-      'payments', 
-      'transactions', 
-      'activities', 
-      'marketData', 
-      'assets', 
-      'liabilities', 
-      'accounts', 
-      'fireConfig', 
-      'userSettings'
+      'payments',
+      'transactions',
+      'activities',
+      'market_data',
+      'assets',
+      'liabilities',
+      'accounts',
+      'fire_members',
+      'user_settings'
     ];
 
     for (const table of tables) {
       try {
-        // Skip tables that don't have userId column (marketData, fireConfig, userSettings)
-        if (['marketData', 'fireConfig', 'userSettings'].includes(table)) {
-          // For tables without userId, delete all rows
+        // Skip tables that don't have user_id column (market_data)
+        if (['market_data'].includes(table)) {
+          // For tables without user_id, delete all rows
           await adapter.run(`DELETE FROM ${table}`);
         } else {
-          await adapter.run(`DELETE FROM ${table} WHERE userId = ?`, [userId]);
+          await adapter.run(`DELETE FROM ${table} WHERE user_id = ?`, [userId]);
         }
       } catch (e) {
         console.warn(`Failed to delete from ${table}:`, e);
@@ -99,9 +99,11 @@ export async function POST(request: Request) {
       await marketDataRepository.upsert(marketDataData.symbol, marketDataData.price, marketDataData.source);
     }
 
-    // Initialize FireConfig
-    const { id: fcId, createdAt: fcCreatedAt, updatedAt: fcUpdatedAt, ...fireConfigData } = mockFireConfig;
-    await fireConfigRepository.upsert(userId, fireConfigData);
+    // Initialize FireMembers
+    for (const member of mockFireMembers) {
+      const { id, createdAt, updatedAt, userId: _, ...memberData } = member;
+      await fireMemberRepository.create(userId, memberData);
+    }
 
     // Initialize UserSettings
     const { id: usId, createdAt: usCreatedAt, updatedAt: usUpdatedAt, ...userSettingsData } = mockUserSettings;
