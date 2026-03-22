@@ -158,15 +158,23 @@ export async function POST(request: Request) {
       }
     }
 
-    // Initialize FireConfig
-    try {
-      await adapter.run(
-        `INSERT INTO fire_config (id, annual_expense, swr, updated_at, created_at) VALUES (?, ?, ?, ?, ?)`,
-        [userId, mockFireConfig.annualExpense, mockFireConfig.swr, now, now]
-      );
-    } catch (error: any) {
-      if (error.code !== '23505') {
-        throw error;
+    // Initialize FireMembers (multiple members for demo)
+    const demoMembers = [
+      { name: '小明', gender: 'male', birthDate: '1990-01-01', monthlyExpense: 10000, targetRetirementAsset: 0 },
+      { name: '小红', gender: 'female', birthDate: '1992-06-15', monthlyExpense: 8000, targetRetirementAsset: 0 }
+    ];
+
+    for (const member of demoMembers) {
+      try {
+        const memberId = `fire_member_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        await adapter.run(
+          `INSERT INTO fire_members (id, user_id, name, gender, birth_date, monthly_expense, target_retirement_asset, updated_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [memberId, userId, member.name, member.gender, member.birthDate, member.monthlyExpense, member.targetRetirementAsset, now, now]
+        );
+      } catch (error: any) {
+        if (error.code !== '23505') {
+          throw error;
+        }
       }
     }
 

@@ -1,5 +1,73 @@
 # 有钱么财务应用变更日志
 
+## [1.7.0] - 2026-03-22
+
+### 🔥 FIRE 目标规划重构
+
+- **多成员家庭支持**
+  - 支持添加多个家庭成员（夫妻、子女等）
+  - 每个成员独立配置：姓名、性别、出生日期、退休年龄、每月支出、退休目标资产
+  - 家庭 FIRE 进度统一计算，汇总所有成员需求
+
+- **退休年龄智能计算**
+  - 根据性别自动估算法定退休年龄（男60岁/女55岁）
+  - 支持手动修改退休年龄，适应不同退休规划
+  - 修改性别时自动重新估算，保留手动调整值
+
+- **净资产计算**
+  - FIRE 进度基于净资产计算（资产 - 负债）
+  - 页面显示资产、负债、净资产三项指标
+  - 更真实反映家庭财务状况
+
+- **动态时间计算**
+  - 根据出生日期和退休年龄自动计算距离退休月数
+  - 随着时间推移自动更新进度
+  - 个人所需 = 每月支出 × 距离退休月数 + 退休目标资产
+
+- **数据库变更**
+  - 新增 `fire_members` 表替代 `fire_config` 表
+  - 字段：id, user_id, name, gender, birth_date, retirement_age, monthly_expense, target_retirement_asset
+
+### 📁 修改文件
+- `packages/data-access/sql/schema.sql` - 新增 fire_members 表
+- `packages/types/index.ts` - 新增 FireMember, FireMemberCalculation, FireCalculation 类型
+- `packages/data-access/src/repositories/fireMemberRepository.ts` - 新增仓库
+- `apps/web/lib/dataAccess.ts` - 添加 fireMemberRepository
+- `apps/web/app/api/fire/route.ts` - 支持多成员 CRUD 和计算
+- `apps/web/app/fire/page.tsx` - 多成员管理界面
+- `apps/web/app/api/demo/init/route.ts` - 演示数据初始化
+- `packages/utils/mockData.ts` - 演示数据更新
+
+## [1.6.0] - 2026-03-22
+
+### 📊 首页图表优化
+
+- **资产负债趋势图重构**
+  - 使用组合图表（ComposedChart）同时展示资产、负债、净资产三条数据
+  - 资产使用绿色面积图（正值堆叠）
+  - 负债使用红色面积图（负值堆叠，显示在0轴下方）
+  - 净资产使用蓝色折线图，直观显示资产减负债的差额
+
+- **数据计算逻辑优化**
+  - 按月计算数据，显示每月月底的累计值
+  - 基于资产和负债的实际创建时间（startDate/createdAt）计算
+  - 在资产/负债创建之前的时间点显示为0，不进行估算
+  - 确保净资产 = 资产 - 负债的数学关系正确
+
+- **时间范围选择器**
+  - 支持6种时间范围：6个月、1年、2年、3年、5年、10年
+  - 默认显示12个月数据
+  - 点击按钮可实时切换时间范围
+  - 图表自动重新计算并渲染
+
+- **日期显示格式**
+  - X轴显示为"YYYY年MM月"格式
+  - Tooltip显示年月信息
+  - 支持跨年数据显示
+
+### 📁 修改文件
+- `apps/web/app/page.tsx` - 首页图表组件重构
+
 ## [1.5.0] - 2026-03-22
 
 ### 🔐 用户认证系统
@@ -383,6 +451,13 @@ sqlite3 database.db < packages/data-access/sql/schema.sql
   - 创建共享工具函数包
   - 创建共享数据访问层包
 
+[1.6.0]: #
+[1.5.0]: #
+[1.4.0]: #
+[1.3.0]: #
+[1.2.2]: #
+[1.2.1]: #
+[1.2.0]: #
 [1.1.0]: #
 [1.0.3]: #
 [1.0.2]: #

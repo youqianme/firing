@@ -31,25 +31,13 @@ export default function RootLayout({
           {/* 主内容区域 */}
           <main className="flex-1 min-h-screen">
             {/* 顶部导航栏 - 桌面端 */}
-            <header className="hidden md:flex items-center justify-between h-16 px-6 bg-white border-b border-slate-200 sticky top-0 z-10">
-              <a href="/" className="text-xl font-bold text-slate-900 flex items-center">
-                <svg className="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                有钱么
-              </a>
+            <header className="hidden md:flex items-center justify-end h-16 px-6 bg-white border-b border-slate-200 sticky top-0 z-10">
               <UserMenu />
             </header>
 
             {/* 移动端顶部导航 */}
             <div className="md:hidden bg-white border-b border-slate-200 sticky top-0 z-10">
-              <div className="flex items-center justify-between h-16 px-4">
-                <a href="/" className="text-xl font-bold text-slate-900 flex items-center">
-                  <svg className="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  有钱么
-                </a>
+              <div className="flex items-center justify-end h-16 px-4">
                 <UserMenu />
               </div>
             </div>

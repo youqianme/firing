@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS assets (
   user_id TEXT NOT NULL DEFAULT 'default',
   name TEXT NOT NULL,
   type TEXT NOT NULL,
+  sub_type TEXT,
   currency TEXT NOT NULL,
   amount DOUBLE PRECISION NOT NULL,
   include_in_fire INTEGER NOT NULL DEFAULT 1,
@@ -100,11 +101,16 @@ CREATE TABLE IF NOT EXISTS activities (
   created_at TEXT NOT NULL
 );
 
--- FIRE配置表
-CREATE TABLE IF NOT EXISTS fire_config (
+-- FIRE成员表（支持家庭多成员）
+CREATE TABLE IF NOT EXISTS fire_members (
   id TEXT PRIMARY KEY,
-  annual_expense DOUBLE PRECISION NOT NULL DEFAULT 0,
-  swr DOUBLE PRECISION NOT NULL DEFAULT 4,
+  user_id TEXT NOT NULL DEFAULT 'default',
+  name TEXT NOT NULL,                        -- 成员姓名
+  gender TEXT NOT NULL DEFAULT 'male',       -- 性别：male/female
+  birth_date TEXT NOT NULL,                  -- 出生日期
+  retirement_age INTEGER NOT NULL DEFAULT 60, -- 退休年龄（根据性别自动估算，但可手动修改）
+  monthly_expense DOUBLE PRECISION NOT NULL DEFAULT 0,  -- 每月支出
+  target_retirement_asset DOUBLE PRECISION NOT NULL DEFAULT 0,  -- 退休时目标资产
   updated_at TEXT NOT NULL,
   created_at TEXT NOT NULL
 );
@@ -129,10 +135,6 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- 初始数据
-INSERT INTO fire_config (id, annual_expense, swr, updated_at, created_at)
-VALUES ('default', 0, 4, NOW(), NOW())
-ON CONFLICT (id) DO NOTHING;
-
 INSERT INTO user_settings (id, base_currency, privacy_mode, updated_at, created_at)
-VALUES ('default', 'CNY', 0, NOW(), NOW())
+VALUES ('default', 'CNY', 0, datetime('now'), datetime('now'))
 ON CONFLICT (id) DO NOTHING;

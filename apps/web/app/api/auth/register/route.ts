@@ -91,8 +91,8 @@ export async function POST(request: Request) {
           );
         } else {
           await adapter.run(
-            `INSERT INTO fire_config (id, annual_expense, swr, updated_at, created_at) VALUES (?, ?, ?, ?, ?)`,
-            [newUserId, 0, 4, now, now]
+            `INSERT INTO fire_config (id, monthly_expense, target_retirement_asset, birth_date, retirement_age, updated_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [newUserId, 10000, 0, '1990-01-01', 60, now, now]
           );
         }
 
@@ -112,8 +112,8 @@ export async function POST(request: Request) {
       } else {
         // 创建默认配置
         await adapter.run(
-          `INSERT INTO fire_config (id, annual_expense, swr, updated_at, created_at) VALUES (?, ?, ?, ?, ?)`,
-          [newUserId, 0, 4, now, now]
+          `INSERT INTO fire_config (id, monthly_expense, target_retirement_asset, birth_date, retirement_age, updated_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [newUserId, 10000, 0, '1990-01-01', 60, now, now]
         );
 
         await adapter.run(
